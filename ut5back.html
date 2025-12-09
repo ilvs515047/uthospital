@@ -15,8 +15,7 @@
         
         <div class="lg:col-span-2 bg-white rounded-xl shadow-lg p-8">
             <div class="flex justify-between items-center mb-6">
-                <h1 class="text-3xl font-bold text-gray-800">UT5 活動表單設計</h1>
-                <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded">V4.0</span>
+                <h1 class="text-3xl font-bold text-gray-800">🛠️ UT5 活動表單設計</h1>
             </div>
             
             <div class="mb-6 bg-blue-50 p-4 rounded-lg border border-blue-100">
@@ -54,86 +53,61 @@
                 </div>
                 
                 <div id="stats-container" class="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
-                    <div class="text-center text-gray-400 py-10">
-                        <i class="fa-solid fa-spinner fa-spin text-2xl mb-2"></i><br>
-                        讀取數據中...
-                    </div>
+                    <div class="text-center text-gray-400 py-10">讀取中...</div>
                 </div>
 
                 <div class="mt-6 pt-4 border-t text-center">
-                    <a href="javascript:downloadCSV()" class="block w-full py-2 bg-green-50 text-green-700 rounded hover:bg-green-100 border border-green-200 transition">
+                    <button onclick="downloadCSV()" class="w-full py-2 bg-green-50 text-green-700 rounded hover:bg-green-100 border border-green-200 transition">
                         <i class="fa-solid fa-file-csv mr-2"></i> 下載 Excel/CSV 報表
-                    </a>
+                    </button>
                 </div>
             </div>
         </div>
-
     </div>
 
     <script>
         // ▼▼▼ 請替換成你的 GAS 網址 ▼▼▼
-        const API_URL = "https://script.google.com/macros/s/AKfycbzdnu5QfsXLkXg0fXXte0lzTGtuPAR4Ewi0YRbos-Xp-J84IZhj3jv-7lEaRD-SAwuQdQ/exec"; 
+        const API_URL = "https://script.google.com/macros/s/你的ID/exec"; 
         // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-        function generateUID() {
-            return 'f_' + Math.random().toString(36).substr(2, 9);
-        }
+        function generateUID() { return 'f_' + Math.random().toString(36).substr(2, 9); }
 
-        // 初始化
         window.onload = async function() {
             Swal.showLoading();
             try {
-                // 讀取設定
                 const res = await fetch(API_URL + "?action=getSettings").then(r => r.json());
                 Swal.close();
                 if(res.success && res.config) {
                     document.getElementById('formTitle').value = res.config.title;
                     res.config.fields.forEach(f => renderField(f));
                 } else {
-                    // 預設欄位
                     renderField({ id: generateUID(), type: 'text', label: '姓名' });
                     renderField({ id: generateUID(), type: 'text', label: '電話' });
                     renderField({ id: generateUID(), type: 'radio_limit', label: '選擇時段', options: [{label:'13:00', limit:6}] });
                 }
                 new Sortable(document.getElementById('fields-container'), { animation: 150, handle: '.field-item' });
-
-                // 讀取統計數據
                 loadStats();
-
-            } catch(e) {
-                Swal.fire('錯誤', '無法連接資料庫', 'error');
-            }
+            } catch(e) { Swal.fire('錯誤', '無法連接資料庫', 'error'); }
         };
 
-        // --- 表單設計功能 ---
         function addField(type) {
-            const defaultData = type === 'text' 
-                ? { id: generateUID(), type: 'text', label: '' } 
-                : { id: generateUID(), type: 'radio_limit', label: '', options: [{label: '', limit: 10}] };
-            renderField(defaultData);
+            renderField(type === 'text' ? { id: generateUID(), type: 'text', label: '' } : { id: generateUID(), type: 'radio_limit', label: '', options: [{label: '', limit: 10}] });
         }
 
         function renderField(data) {
             const container = document.getElementById('fields-container');
             const div = document.createElement('div');
             div.className = "field-item bg-white border-2 border-gray-200 rounded-lg p-4 relative group hover:border-blue-400 transition";
-            div.dataset.id = data.id; 
-            div.dataset.type = data.type;
+            div.dataset.id = data.id; div.dataset.type = data.type;
             
             let html = `
                 <div class="flex justify-between items-center mb-3 cursor-move">
                     <div class="flex-1">
-                        <div class="flex items-center gap-2 mb-1">
-                            <span class="text-[10px] text-gray-400 font-mono bg-gray-100 px-1 rounded">${data.id}</span>
-                            <span class="text-xs font-bold text-gray-500 uppercase">${data.type === 'text' ? '文字題' : '限量選單'}</span>
-                        </div>
-                        <input type="text" placeholder="輸入題目名稱" class="field-label w-full text-lg font-bold border-b border-transparent focus:border-blue-500 hover:border-gray-300 outline-none bg-transparent" value="${data.label}">
+                        <div class="flex items-center gap-2 mb-1"><span class="text-[10px] text-gray-400 font-mono bg-gray-100 px-1 rounded">${data.id}</span></div>
+                        <input type="text" placeholder="題目名稱" class="field-label w-full text-lg font-bold border-b border-transparent focus:border-blue-500 outline-none bg-transparent" value="${data.label}">
                     </div>
-                    <button onclick="this.closest('.field-item').remove()" class="text-gray-300 hover:text-red-500 p-2 transition">
-                        <i class="fa-solid fa-xmark text-xl"></i>
-                    </button>
-                </div>
-            `;
+                    <button onclick="this.closest('.field-item').remove()" class="text-gray-300 hover:text-red-500 p-2"><i class="fa-solid fa-xmark text-xl"></i></button>
+                </div>`;
 
             if (data.type === 'radio_limit') {
                 html += `<div class="options-list space-y-2 pl-4 border-l-2 border-indigo-100">`;
@@ -146,182 +120,91 @@
         }
 
         function getOptionHtml(label="", limit=10) {
-            return `
-                <div class="option-row flex gap-2 items-center animate-fade-in">
-                    <input type="text" class="opt-label border p-1 rounded flex-1 text-sm focus:ring-1 focus:ring-indigo-500 outline-none" value="${label}" placeholder="選項名稱">
-                    <div class="flex items-center gap-1 bg-gray-50 px-2 rounded">
-                        <span class="text-xs text-gray-400">限</span>
-                        <input type="number" class="opt-limit border-none bg-transparent w-10 text-center text-sm font-mono focus:outline-none" value="${limit}">
-                    </div>
-                    <button onclick="this.parentElement.remove()" class="text-gray-300 hover:text-red-400"><i class="fa-solid fa-circle-minus"></i></button>
-                </div>
-            `;
+            return `<div class="option-row flex gap-2 items-center"><input type="text" class="opt-label border p-1 rounded flex-1 text-sm focus:ring-1 focus:ring-indigo-500 outline-none" value="${label}" placeholder="選項"><div class="flex items-center gap-1 bg-gray-50 px-2 rounded"><span class="text-xs text-gray-400">限</span><input type="number" class="opt-limit border-none bg-transparent w-10 text-center text-sm font-mono focus:outline-none" value="${limit}"></div><button onclick="this.parentElement.remove()" class="text-gray-300 hover:text-red-400"><i class="fa-solid fa-circle-minus"></i></button></div>`;
         }
         function addOption(btn) { btn.previousElementSibling.insertAdjacentHTML('beforeend', getOptionHtml()); }
 
-        // --- 儲存設定 ---
         function saveConfig() {
             const title = document.getElementById('formTitle').value;
             const fields = [];
             document.querySelectorAll('.field-item').forEach(item => {
                 const label = item.querySelector('.field-label').value.trim();
                 if (!label) return;
-                
-                const fieldData = { 
-                    id: item.dataset.id,
-                    type: item.dataset.type, 
-                    label: label 
-                };
-                
+                const fieldData = { id: item.dataset.id, type: item.dataset.type, label: label };
                 if (fieldData.type === 'radio_limit') {
                     fieldData.options = [];
                     item.querySelectorAll('.option-row').forEach(row => {
-                        fieldData.options.push({
-                            label: row.querySelector('.opt-label').value,
-                            limit: row.querySelector('.opt-limit').value
-                        });
+                        fieldData.options.push({ label: row.querySelector('.opt-label').value, limit: row.querySelector('.opt-limit').value });
                     });
                 }
                 fields.push(fieldData);
             });
-
             Swal.fire({ title: '儲存中...', didOpen: () => Swal.showLoading() });
-            
-            fetch(API_URL, {
-                method: "POST",
-                body: JSON.stringify({ action: "saveConfig", password: "1234", config: { title, fields } })
-            })
-            .then(r => r.json())
-            .then(res => {
-                Swal.fire(res.success ? '成功' : '失敗', res.message, res.success ? 'success' : 'error');
-                if(res.success) loadStats(); // 儲存後更新統計
-            });
+            fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "saveConfig", password: "1234", config: { title, fields } }) })
+            .then(r => r.json()).then(res => { Swal.fire(res.success ? '成功' : '失敗', res.message, res.success ? 'success' : 'error'); if(res.success) loadStats(); });
         }
 
-        // --- ★★★ 新功能：統計與下載 ★★★ ---
-
-        // 1. 讀取即時統計 (使用 getForm 介面，因為它有包含 counts)
         function loadStats() {
             const container = document.getElementById('stats-container');
-            // 防止快取
-            fetch(API_URL + "?action=getForm&t=" + new Date().getTime())
-                .then(r => r.json())
-                .then(res => {
-                    if(res.success) {
-                        renderStats(res.form);
-                    } else {
-                        container.innerHTML = `<div class="text-red-500 text-center">暫無數據</div>`;
-                    }
-                })
-                .catch(() => {
-                    container.innerHTML = `<div class="text-gray-400 text-center">更新失敗</div>`;
-                });
+            fetch(API_URL + "?action=getForm&t=" + new Date().getTime()).then(r => r.json()).then(res => {
+                if(res.success) renderStats(res.form);
+                else container.innerHTML = `<div class="text-red-500 text-center">暫無數據</div>`;
+            }).catch(() => container.innerHTML = `<div class="text-gray-400 text-center">更新失敗</div>`);
         }
 
         function renderStats(form) {
             const container = document.getElementById('stats-container');
             container.innerHTML = '';
-            
-            if(!form.fields) return;
-
             let hasLimitField = false;
-
             form.fields.forEach(field => {
                 if (field.type === 'radio_limit') {
                     hasLimitField = true;
-                    let html = `
-                        <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                            <h3 class="font-bold text-gray-700 mb-2 border-b pb-1">${field.label}</h3>
-                            <div class="space-y-2">
-                    `;
-                    
+                    let html = `<div class="bg-gray-50 rounded-lg p-3 border border-gray-200"><h3 class="font-bold text-gray-700 mb-2 border-b pb-1">${field.label}</h3><div class="space-y-2">`;
                     field.options.forEach(opt => {
                         const percent = Math.min(100, (opt.current / opt.limit) * 100).toFixed(1);
                         const isFull = opt.current >= opt.limit;
-                        const colorClass = isFull ? 'bg-red-500' : 'bg-green-500';
-                        
-                        html += `
-                            <div class="text-sm">
-                                <div class="flex justify-between mb-1">
-                                    <span>${opt.label}</span>
-                                    <span class="font-mono ${isFull ? 'text-red-600 font-bold' : 'text-gray-600'}">
-                                        ${opt.current} / ${opt.limit}
-                                    </span>
-                                </div>
-                                <div class="w-full bg-gray-200 rounded-full h-2">
-                                    <div class="${colorClass} h-2 rounded-full transition-all" style="width: ${percent}%"></div>
-                                </div>
-                            </div>
-                        `;
+                        html += `<div class="text-sm"><div class="flex justify-between mb-1"><span>${opt.label}</span><span class="font-mono ${isFull ? 'text-red-600 font-bold' : 'text-gray-600'}">${opt.current} / ${opt.limit}</span></div><div class="w-full bg-gray-200 rounded-full h-2"><div class="${isFull ? 'bg-red-500' : 'bg-green-500'} h-2 rounded-full transition-all" style="width: ${percent}%"></div></div></div>`;
                     });
-                    
                     html += `</div></div>`;
                     container.innerHTML += html;
                 }
             });
-
-            if (!hasLimitField) {
-                container.innerHTML = `<div class="text-center text-gray-500 text-sm">此表單沒有設定限量選項，<br>暫無名額統計。</div>`;
-            }
+            if (!hasLimitField) container.innerHTML = `<div class="text-center text-gray-500 text-sm">暫無名額統計</div>`;
         }
 
-        // 2. 下載 CSV
-        function downloadCSV() {
-            // 直接在新視窗打開 GAS 的 CSV 下載連結
-            window.open(API_URL + "?action=getCSV", "_blank");
+        async function downloadCSV() {
+            Swal.fire({ title: '準備下載...', didOpen: () => Swal.showLoading() });
+            try {
+                const res = await fetch(API_URL + "?action=getCSV").then(r => r.json());
+                if (res.success) {
+                    const blob = new Blob([res.csv], { type: 'text/csv;charset=utf-8;' });
+                    const link = document.createElement("a");
+                    link.href = URL.createObjectURL(blob);
+                    link.download = res.fileName;
+                    link.click();
+                    Swal.close();
+                } else Swal.fire('提示', res.message, 'info');
+            } catch(e) { Swal.fire('錯誤', '下載失敗', 'error'); }
         }
 
-        // 3. 清空資料 (含下載詢問)
         function clearDatabase() {
             Swal.fire({
-                title: '⚠️ 清空資料確認',
-                html: "此操作將刪除所有報名資料，無法復原！<br><b>建議您在清空前先下載備份。</b>",
-                icon: 'warning',
-                showDenyButton: true,
-                showCancelButton: true,
-                confirmButtonText: '直接清空',
-                denyButtonText: '📥 下載並清空',
-                cancelButtonText: '取消',
-                confirmButtonColor: '#d33',
-                denyButtonColor: '#3085d6',
+                title: '⚠️ 清空確認', html: "<b>建議先下載備份！</b>", icon: 'warning', showDenyButton: true, showCancelButton: true, confirmButtonText: '直接清空', denyButtonText: '下載並清空', confirmButtonColor: '#d33'
             }).then((result) => {
-                
-                if (result.isDenied) {
-                    // 使用者選擇「下載並清空」
-                    downloadCSV();
-                    // 延遲一下再執行清空，確保下載開始
-                    setTimeout(() => executeClear(), 2000);
-                } else if (result.isConfirmed) {
-                    // 使用者選擇「直接清空」
-                    executeClear();
-                }
+                if (result.isDenied) { downloadCSV(); setTimeout(() => executeClear(), 2000); }
+                else if (result.isConfirmed) { executeClear(); }
             });
         }
 
         function executeClear() {
-            Swal.fire({
-                title: '正在清空...',
-                didOpen: () => Swal.showLoading()
-            });
-
-            fetch(API_URL, { 
-                method: "POST", 
-                body: JSON.stringify({ action: "clearData", password: "1234" }) 
-            })
-            .then(r => r.json())
-            .then(d => {
-                if(d.success) {
-                    Swal.fire('完成', d.message, 'success');
-                    loadStats(); // 清空後刷新統計
-                } else {
-                    Swal.fire('失敗', d.message, 'error');
-                }
+            Swal.fire({ title: '清空中...', didOpen: () => Swal.showLoading() });
+            fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "clearData", password: "1234" }) })
+            .then(r => r.json()).then(d => {
+                if(d.success) { Swal.fire('完成', d.message, 'success'); loadStats(); }
+                else Swal.fire('失敗', d.message, 'error');
             });
         }
-
-        // 每 10 秒自動刷新一次統計
         setInterval(loadStats, 10000);
-
     </script>
 </body>
 </html>
