@@ -68,9 +68,10 @@
                 </div>
                 
                 <div class="flex gap-2">
-                    <button onclick="clearDatabase()" class="px-5 py-3 bg-red-50 text-red-500 border-2 border-transparent hover:border-red-200 rounded-2xl font-bold transition active:scale-95 flex items-center gap-2" title="清空資料">
-                        <i class="fa-solid fa-trash-can"></i>
-                    </button>
+                            <button onclick="clearDatabase()" class="px-5 py-3 bg-red-50 text-red-500 border-2 border-transparent hover:border-red-200 rounded-2xl font-bold transition active:scale-95 flex items-center gap-2" title="清空資料">
+                                <i class="fa-solid fa-trash-can"></i>
+                                <span class="hidden sm:inline">清空歷史資料(慎用)</span>
+                            </button>
                     <button onclick="saveConfig()" class="px-8 py-3 bg-gradient-to-r from-rose-400 to-pink-500 text-white rounded-2xl font-bold shadow-lg shadow-rose-200 hover:shadow-rose-300 hover:-translate-y-1 transition active:scale-95 flex items-center gap-2">
                         <i class="fa-solid fa-cloud-arrow-up"></i> 儲存發佈
                     </button>
