@@ -3,29 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>活動後台管理</title>
+    <title>活動報名</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 </head>
-<body class="bg-gray-100 min-h-screen py-10 px-4">
-    <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-8">
-        <h1 class="text-3xl font-bold text-gray-800 mb-2">⚙️ 活動表單設計 (V3.0)</h1>
-        
-        <div class="mb-6 bg-blue-50 p-4 rounded-lg">
-            <label class="block text-sm font-bold mb-2">活動標題</label>
-            <input type="text" id="formTitle" value="捐血活動報名" class="w-full border p-2 rounded">
-            <input type="password" id="adminPwd" value="1234" class="hidden">
+<body class="bg-red-50 min-h-screen py-8 px-4 font-sans text-gray-700">
+
+    <div class="max-w-md mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
+        <div class="bg-red-600 p-6 text-center text-white">
+            <h1 id="pageTitle" class="text-2xl font-bold">載入中...</h1>
+            <p class="text-red-100 mt-2 text-sm">請填寫下方資訊</p>
         </div>
 
-        <div id="fields-container" class="space-y-4 mb-8"></div>
+        <form id="dynamicForm" class="p-6 space-y-6">
+            <div class="text-center py-10 text-gray-400">正在讀取最新名額...</div>
+        </form>
 
-        <div class="flex flex-col md:flex-row gap-4 border-t pt-6">
-            <button onclick="addField('text')" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded">+ 新增文字題</button>
-            <button onclick="addField('radio_limit')" class="px-4 py-2 bg-indigo-100 text-indigo-800 rounded">+ 新增限量選單</button>
-            <div class="flex-1"></div>
-            <button onclick="clearDatabase()" class="px-4 py-2 bg-red-100 text-red-600 rounded hover:bg-red-200">⚠️ 清空所有資料</button>
-            <button onclick="saveConfig()" class="px-6 py-2 bg-blue-600 text-white font-bold rounded shadow hover:bg-blue-700">儲存並發佈</button>
+        <div class="p-4 bg-gray-50 border-t">
+            <button onclick="submitData()" id="submitBtn" class="w-full bg-red-600 text-white font-bold py-3 rounded-lg shadow hover:bg-red-700 transition disabled:bg-gray-400">
+                送出報名
+            </button>
         </div>
     </div>
 
@@ -34,114 +31,94 @@
         const API_URL = "https://script.google.com/macros/s/AKfycbzdnu5QfsXLkXg0fXXte0lzTGtuPAR4Ewi0YRbos-Xp-J84IZhj3jv-7lEaRD-SAwuQdQ/exec"; 
         // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-        function generateUID() {
-            return 'f_' + Math.random().toString(36).substr(2, 9);
-        }
+        let formStructure = null;
 
-        window.onload = async function() {
-            Swal.showLoading();
-            try {
-                const res = await fetch(API_URL + "?action=getSettings").then(r => r.json());
-                Swal.close();
-                if(res.success && res.config) {
-                    document.getElementById('formTitle').value = res.config.title;
-                    res.config.fields.forEach(f => renderField(f));
-                } else {
-                    // 初始化預設欄位
-                    renderField({ id: generateUID(), type: 'text', label: '姓名' });
-                    renderField({ id: generateUID(), type: 'text', label: '電話' });
-                    renderField({ id: generateUID(), type: 'radio_limit', label: '選擇時段', options: [{label:'13:00', limit:6}] });
-                }
-                new Sortable(document.getElementById('fields-container'), { animation: 150 });
-            } catch(e) {
-                Swal.fire('錯誤', '無法讀取後台設定，請檢查網址或權限', 'error');
-            }
+        window.onload = () => {
+            // ★★★ 加上 &t=... 防止瀏覽器快取舊資料 ★★★
+            fetch(API_URL + "?action=getForm&t=" + new Date().getTime())
+                .then(r => r.json())
+                .then(res => {
+                    if (res.success) {
+                        formStructure = res.form;
+                        renderForm(res.form);
+                    } else {
+                        document.getElementById('dynamicForm').innerHTML = `<p class="text-center text-red-500">${res.message}</p>`;
+                    }
+                })
+                .catch(() => document.getElementById('dynamicForm').innerHTML = "連線失敗");
         };
 
-        function addField(type) {
-            const defaultData = type === 'text' 
-                ? { id: generateUID(), type: 'text', label: '' } 
-                : { id: generateUID(), type: 'radio_limit', label: '', options: [{label: '', limit: 10}] };
-            renderField(defaultData);
-        }
+        function renderForm(data) {
+            document.getElementById('pageTitle').innerText = data.title;
+            const container = document.getElementById('dynamicForm');
+            container.innerHTML = '';
 
-        function renderField(data) {
-            const container = document.getElementById('fields-container');
-            const div = document.createElement('div');
-            div.className = "field-item bg-white border-2 border-gray-200 rounded-lg p-4 relative cursor-move";
-            div.dataset.id = data.id; 
-            div.dataset.type = data.type;
-            
-            let html = `
-                <div class="flex justify-between items-center mb-3">
-                    <div class="flex-1">
-                        <span class="text-xs text-gray-400 font-mono select-none">ID: ${data.id}</span>
-                        <input type="text" placeholder="題目名稱" class="field-label w-full text-lg font-bold border-b focus:border-blue-500 outline-none" value="${data.label}">
-                    </div>
-                    <button onclick="this.closest('.field-item').remove()" class="text-red-400 ml-4 text-xl font-bold">×</button>
-                </div>
-            `;
-
-            if (data.type === 'radio_limit') {
-                html += `<div class="options-list space-y-2 pl-4 border-l-4 border-indigo-100">`;
-                const opts = data.options || [];
-                opts.forEach(opt => html += getOptionHtml(opt.label, opt.limit));
-                html += `</div><button onclick="addOption(this)" class="mt-2 text-sm text-indigo-600 font-bold">+ 新增選項</button>`;
-            }
-            div.innerHTML = html;
-            container.appendChild(div);
-        }
-
-        function getOptionHtml(label="", limit=10) {
-            return `<div class="option-row flex gap-2 items-center"><input type="text" class="opt-label border p-1 rounded flex-1" value="${label}" placeholder="選項"><input type="number" class="opt-limit border p-1 w-20 text-center" value="${limit}"><button onclick="this.parentElement.remove()" class="text-red-300 font-bold">×</button></div>`;
-        }
-        function addOption(btn) { btn.previousElementSibling.insertAdjacentHTML('beforeend', getOptionHtml()); }
-
-        function saveConfig() {
-            const title = document.getElementById('formTitle').value;
-            const fields = [];
-            document.querySelectorAll('.field-item').forEach(item => {
-                const label = item.querySelector('.field-label').value.trim();
-                if (!label) return;
+            data.fields.forEach(field => {
+                const wrapper = document.createElement('div');
+                wrapper.innerHTML = `<label class="block text-lg font-bold mb-2 text-left">${field.label}</label>`;
                 
-                const fieldData = { 
-                    id: item.dataset.id,
-                    type: item.dataset.type, 
-                    label: label 
-                };
-                
-                if (fieldData.type === 'radio_limit') {
-                    fieldData.options = [];
-                    item.querySelectorAll('.option-row').forEach(row => {
-                        fieldData.options.push({
-                            label: row.querySelector('.opt-label').value,
-                            limit: row.querySelector('.opt-limit').value
-                        });
+                if (field.type === 'text') {
+                    wrapper.innerHTML += `<input type="text" name="${field.id}" class="w-full border p-2 rounded focus:ring-2 focus:ring-red-500 outline-none" placeholder="請輸入...">`;
+                } else if (field.type === 'radio_limit') {
+                    let opts = `<div class="space-y-2">`;
+                    field.options.forEach(opt => {
+                        const isFull = opt.remaining <= 0;
+                        opts += `
+                            <label class="block border p-3 rounded flex justify-between cursor-pointer transition hover:bg-red-50 ${isFull ? 'bg-gray-100 opacity-50 cursor-not-allowed' : 'bg-white'}">
+                                <div class="flex items-center gap-2">
+                                    <input type="radio" name="${field.id}" value="${opt.label}" ${isFull ? 'disabled' : ''} class="accent-red-600"> 
+                                    <span>${opt.label}</span>
+                                </div>
+                                <span class="text-sm font-bold ${isFull ? 'text-red-500':'text-green-600'}">${isFull ? '額滿' : '餘 '+opt.remaining}</span>
+                            </label>`;
                     });
+                    wrapper.innerHTML += opts + `</div>`;
                 }
-                fields.push(fieldData);
+                container.appendChild(wrapper);
+            });
+        }
+
+        function submitData() {
+            const btn = document.getElementById('submitBtn');
+            const answers = {};
+            let isValid = true;
+
+            formStructure.fields.forEach(field => {
+                if (field.type === 'text') {
+                    const el = document.querySelector(`input[name="${field.id}"]`);
+                    const val = el ? el.value.trim() : "";
+                    if(!val) { isValid = false; if(el) el.classList.add('border-red-500'); }
+                    else { if(el) el.classList.remove('border-red-500'); }
+                    answers[field.id] = val;
+                } else {
+                    const checked = document.querySelector(`input[name="${field.id}"]:checked`);
+                    if(!checked) isValid = false;
+                    answers[field.id] = checked ? checked.value : "";
+                }
             });
 
-            Swal.fire({ title: '處理中...', didOpen: () => Swal.showLoading() });
+            if (!isValid) return Swal.fire('提示', '請填寫完整資料', 'warning');
+            
+            btn.disabled = true;
+            btn.innerText = "處理中...";
             
             fetch(API_URL, {
                 method: "POST",
                 headers: { "Content-Type": "text/plain" },
-                body: JSON.stringify({ action: "saveConfig", password: "1234", config: { title, fields } })
+                body: JSON.stringify({ action: "submit", answers: answers })
             })
             .then(r => r.json())
-            .then(res => Swal.fire(res.success ? '成功' : '失敗', res.message, res.success ? 'success' : 'error'));
-        }
-
-        function clearDatabase() {
-            Swal.fire({
-                title: '⚠️ 確定清空?', text: '這將刪除所有已報名的資料，且無法復原！(請確認您已經備份或活動已結束)', icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: '是的，清空'
-            }).then((res) => {
-                if(res.isConfirmed) {
-                    Swal.showLoading();
-                    fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "clearData", password: "1234" }) })
-                    .then(r => r.json()).then(d => Swal.fire('完成', d.message, 'success'));
+            .then(res => {
+                if(res.success) {
+                    Swal.fire('成功', '報名完成！', 'success').then(() => location.reload());
+                } else {
+                    Swal.fire('哎呀', res.message, 'error').then(() => location.reload());
                 }
+            })
+            .catch(() => {
+                Swal.fire('錯誤', '網路異常', 'error');
+                btn.disabled = false;
+                btn.innerText = "送出報名";
             });
         }
     </script>
