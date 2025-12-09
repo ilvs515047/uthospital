@@ -3,58 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>捐血活動報名</title>
+    <title>活動報名</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <style>
-        .fade-in { animation: fadeIn 0.5s ease-in; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    </style>
 </head>
-<body class="bg-red-50 min-h-screen py-8 px-4 font-sans text-gray-700">
-
-    <div class="max-w-lg mx-auto bg-white rounded-xl shadow-xl overflow-hidden fade-in">
-        <div class="bg-gradient-to-r from-red-600 to-red-500 p-6 text-center text-white">
-            <h1 id="pageTitle" class="text-2xl font-bold">載入中...</h1>
-            <p class="text-red-100 mt-2 text-sm opacity-90">請填寫下方資訊完成報名</p>
-        </div>
-
-        <form id="dynamicForm" class="p-6 space-y-6">
-            <div class="text-center text-gray-400 py-12 flex flex-col items-center">
-                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mb-2"></div>
-                正在讀取最新名額...
-            </div>
-        </form>
-
-        <div class="p-6 border-t bg-gray-50">
-            <button id="submitBtn" onclick="submitData()" class="w-full bg-red-600 text-white font-bold py-3.5 rounded-lg hover:bg-red-700 transition shadow-md disabled:bg-gray-400 disabled:cursor-not-allowed">
-                送出報名
-            </button>
-        </div>
+<body class="bg-red-50 min-h-screen py-8 px-4">
+    <div class="max-w-md mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
+        <div class="bg-red-600 p-6 text-center text-white"><h1 id="pageTitle" class="text-2xl font-bold">載入中...</h1></div>
+        <form id="dynamicForm" class="p-6 space-y-6 text-center"><p>讀取中...</p></form>
+        <div class="p-4 bg-gray-50"><button onclick="submitData()" class="w-full bg-red-600 text-white font-bold py-3 rounded-lg shadow">送出</button></div>
     </div>
 
     <script>
-        // ▼▼▼ 請替換成你的 GAS 網址 ▼▼▼
-        const API_URL = "https://script.google.com/macros/s/AKfycbzbMh6rc44g7jaascRCiHcmz2KSDYKOda5Gs4P0UN86yikb06QYh3ja7r_pXdUshGCE7w/exec"; 
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
+        const API_URL = "https://script.google.com/macros/s/AKfycbyVbDoPrrdD8enuDWxaies6Pr9u6myo6DAGBvjnnPKqorPDWxO3QKYIj6ODb8zK1uebEA/exec"; // ★記得換★
         let formStructure = null;
 
-        window.onload = function() {
-            fetch(API_URL + "?action=getForm")
-                .then(r => r.json())
-                .then(res => {
-                    if (res.success) {
-                        formStructure = res.form;
-                        renderForm(res.form);
-                    } else {
-                        document.getElementById('dynamicForm').innerHTML = `<p class="text-red-500 text-center py-4 bg-red-50 rounded">${res.message}</p>`;
-                        document.getElementById('pageTitle').innerText = "活動未開放";
-                    }
-                })
-                .catch(() => {
-                    document.getElementById('dynamicForm').innerHTML = `<p class="text-center text-gray-500">連線失敗，請檢查網路。</p>`;
-                });
+        window.onload = () => {
+            fetch(API_URL + "?action=getForm").then(r => r.json()).then(res => {
+                if (res.success) {
+                    formStructure = res.form;
+                    renderForm(res.form);
+                } else document.getElementById('dynamicForm').innerHTML = res.message;
+            });
         };
 
         function renderForm(data) {
@@ -64,110 +34,54 @@
 
             data.fields.forEach(field => {
                 const wrapper = document.createElement('div');
-                wrapper.className = "form-group animate-fade-in";
+                wrapper.innerHTML = `<label class="block text-lg font-bold mb-2 text-left">${field.label}</label>`;
                 
-                // 1. 題目
-                const label = document.createElement('label');
-                label.className = "block text-lg font-bold mb-2 text-gray-800";
-                label.innerText = field.label;
-                wrapper.appendChild(label);
-
-                // 2. 輸入元件
                 if (field.type === 'text') {
-                    const input = document.createElement('input');
-                    input.type = "text";
-                    input.name = field.label;
-                    input.placeholder = "請輸入...";
-                    input.className = "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition";
-                    wrapper.appendChild(input);
-                } 
-                else if (field.type === 'radio_limit') {
-                    const optionsContainer = document.createElement('div');
-                    optionsContainer.className = "space-y-3";
-                    
+                    // input 的 name 改用 ID
+                    wrapper.innerHTML += `<input type="text" name="${field.id}" class="w-full border p-2 rounded">`;
+                } else if (field.type === 'radio_limit') {
+                    let opts = `<div class="space-y-2">`;
                     field.options.forEach(opt => {
                         const isFull = opt.remaining <= 0;
-                        const percent = (opt.current / opt.limit) * 100;
-                        let colorClass = isFull ? 'bg-red-500' : (percent > 80 ? 'bg-yellow-500' : 'bg-green-500');
-
-                        const optHtml = `
-                            <label class="block border rounded-lg p-3 cursor-pointer relative overflow-hidden transition hover:shadow-md ${isFull ? 'bg-gray-100 opacity-60 cursor-not-allowed' : 'bg-white border-gray-200 hover:border-red-300'}">
-                                <input type="radio" name="${field.label}" value="${opt.label}" class="peer hidden" ${isFull ? 'disabled' : ''}>
-                                
-                                <div class="flex justify-between items-center relative z-10 mb-2">
-                                    <span class="font-medium text-gray-800 text-lg">${opt.label}</span>
-                                    <span class="text-sm font-bold px-2 py-1 rounded ${isFull ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-600'}">
-                                        ${isFull ? '已額滿' : `餘 ${opt.remaining} 位`}
-                                    </span>
-                                </div>
-                                
-                                <div class="w-full bg-gray-100 rounded-full h-1.5 relative z-10">
-                                    <div class="${colorClass} h-1.5 rounded-full transition-all duration-500" style="width: ${percent}%"></div>
-                                </div>
-                                
-                                <div class="absolute inset-0 border-2 border-red-500 rounded-lg opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none"></div>
-                            </label>
-                        `;
-                        optionsContainer.insertAdjacentHTML('beforeend', optHtml);
+                        opts += `
+                            <label class="block border p-3 rounded flex justify-between ${isFull ? 'bg-gray-100 opacity-50' : 'bg-white'}">
+                                <div><input type="radio" name="${field.id}" value="${opt.label}" ${isFull ? 'disabled' : ''}> ${opt.label}</div>
+                                <span class="text-sm font-bold ${isFull ? 'text-red-500':'text-green-500'}">${isFull ? '額滿' : '餘 '+opt.remaining}</span>
+                            </label>`;
                     });
-                    wrapper.appendChild(optionsContainer);
+                    wrapper.innerHTML += opts + `</div>`;
                 }
-
                 container.appendChild(wrapper);
             });
         }
 
         function submitData() {
-            const btn = document.getElementById('submitBtn');
             const answers = {};
             let isValid = true;
-
-            // 收集資料
             formStructure.fields.forEach(field => {
-                if(field.type === 'text') {
-                    const el = document.querySelector(`input[name="${field.label}"]`);
-                    const val = el ? el.value.trim() : "";
-                    if(!val) { isValid = false; el.classList.add('border-red-500'); }
-                    else { if(el) el.classList.remove('border-red-500'); }
-                    answers[field.label] = val;
-                } else if (field.type === 'radio_limit') {
-                    const checked = document.querySelector(`input[name="${field.label}"]:checked`);
+                // 用 ID 去抓值
+                if (field.type === 'text') {
+                    const val = document.querySelector(`input[name="${field.id}"]`).value;
+                    if(!val) isValid = false;
+                    answers[field.id] = val;
+                } else {
+                    const checked = document.querySelector(`input[name="${field.id}"]:checked`);
                     if(!checked) isValid = false;
-                    else answers[field.label] = checked.value;
+                    answers[field.id] = checked ? checked.value : "";
                 }
             });
 
-            if (!isValid) {
-                Swal.fire('提示', '請填寫所有欄位', 'warning');
-                return;
-            }
-
-            btn.disabled = true;
-            btn.innerHTML = `<span class="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span> 提交中...`;
-
+            if (!isValid) return Swal.fire('提示', '請填寫完整', 'warning');
+            
+            Swal.showLoading();
             fetch(API_URL, {
                 method: "POST",
-                headers: { "Content-Type": "text/plain" },
                 body: JSON.stringify({ action: "submit", answers: answers })
             })
             .then(r => r.json())
             .then(res => {
-                if(res.success) {
-                    Swal.fire({
-                        title: '報名成功！',
-                        text: '請準時出席活動',
-                        icon: 'success',
-                        confirmButtonColor: '#dc2626'
-                    }).then(() => window.location.reload());
-                } else {
-                    Swal.fire('哎呀', res.message, 'error');
-                    window.location.reload(); // 刷新以更新名額
-                }
-            })
-            .catch(() => {
-                Swal.fire('錯誤', '網路錯誤，請稍後再試', 'error');
-                btn.disabled = false;
-                btn.innerText = "送出報名";
+                if(res.success) Swal.fire('成功', '報名完成', 'success').then(() => location.reload());
+                else Swal.fire('失敗', res.message, 'error').then(() => location.reload());
             });
         }
     </script>
