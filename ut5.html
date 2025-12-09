@@ -2,35 +2,80 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>活動報名</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>捐血活動報名</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Varela+Round&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* 全局字型設定 */
+        body { font-family: 'Zen Maru Gothic', 'Varela Round', sans-serif; }
+        
+        /* 自定義動畫 */
+        .fade-in-up { animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes fadeInUp { 
+            from { opacity: 0; transform: translateY(20px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+
+        .pop-in { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes popIn {
+            0% { transform: scale(0.95); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* 隱藏 Radio 圓點，改用樣式控制 */
+        input[type="radio"]:checked + div {
+            border-color: #f43f5e; /* Rose-500 */
+            background-color: #fff1f2; /* Rose-50 */
+            box-shadow: 0 4px 6px -1px rgba(244, 63, 94, 0.2);
+        }
+        
+        /* 選項卡片選中時的圖標顯示 */
+        input[type="radio"]:checked + div .check-icon { opacity: 1; transform: scale(1); }
+    </style>
 </head>
-<body class="bg-red-50 min-h-screen py-8 px-4 font-sans text-gray-700">
+<body class="bg-gradient-to-br from-rose-100 via-pink-50 to-orange-50 min-h-screen py-6 px-4 text-gray-700">
 
-    <div class="max-w-md mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
-        <div class="bg-red-600 p-6 text-center text-white">
-            <h1 id="pageTitle" class="text-2xl font-bold">載入中...</h1>
-            <p class="text-red-100 mt-2 text-sm">請填寫下方資訊</p>
-        </div>
+    <div class="max-w-md mx-auto relative">
+        <div class="absolute -top-10 -left-10 w-40 h-40 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
+        <div class="absolute -top-10 -right-10 w-40 h-40 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
 
-        <form id="dynamicForm" class="p-6 space-y-6">
-            <div class="text-center py-10 text-gray-400">
-                <span class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mb-2"></span>
-                <br>正在讀取最新名額...
+        <div class="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl overflow-hidden border border-white fade-in-up relative z-10">
+            
+            <div class="bg-gradient-to-r from-rose-400 to-pink-500 p-8 text-center text-white relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-full opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+                <div class="relative z-10">
+                    <div class="text-4xl mb-2">🩸</div>
+                    <h1 id="pageTitle" class="text-2xl font-bold tracking-wide text-shadow-sm">載入中...</h1>
+                    <p class="text-pink-100 mt-2 text-sm font-medium bg-white/20 inline-block px-3 py-1 rounded-full backdrop-blur-md">
+                        ✨ 請填寫下方資訊完成報名 ✨
+                    </p>
+                </div>
             </div>
-        </form>
 
-        <div class="p-4 bg-gray-50 border-t" id="btnContainer" style="display: none;">
-            <button onclick="submitData()" id="submitBtn" class="w-full bg-red-600 text-white font-bold py-3 rounded-lg shadow hover:bg-red-700 transition disabled:bg-gray-400">
-                送出報名
-            </button>
+            <form id="dynamicForm" class="p-6 space-y-6">
+                <div class="text-center py-12 text-rose-400">
+                    <div class="inline-block animate-bounce text-4xl mb-2">💓</div>
+                    <p class="font-bold">正在讀取最新名額...</p>
+                </div>
+            </form>
+
+            <div class="p-6 bg-gray-50/50 border-t border-gray-100" id="btnContainer" style="display: none;">
+                <button onclick="submitData()" id="submitBtn" class="group w-full bg-gradient-to-r from-rose-500 to-pink-500 text-white font-bold py-4 rounded-2xl shadow-lg shadow-rose-200 hover:shadow-rose-300 hover:scale-[1.02] active:scale-95 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <span class="inline-block transition-transform group-hover:-translate-y-1">🚀 立即送出報名</span>
+                </button>
+            </div>
         </div>
+        
+        <p class="text-center text-gray-400 text-xs mt-6 font-medium">
+            © UT5 捐血中心 • 熱血有你真好 ❤️
+        </p>
     </div>
 
     <script>
-        // ▼▼▼ 請替換成你的 GAS 網址 ▼▼▼
+        // ▼▼▼ 你的 GAS 網址 ▼▼▼
         const API_URL = "https://script.google.com/macros/s/AKfycbzdnu5QfsXLkXg0fXXte0lzTGtuPAR4Ewi0YRbos-Xp-J84IZhj3jv-7lEaRD-SAwuQdQ/exec"; 
         // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
@@ -43,13 +88,25 @@
                     if (res.success) {
                         formStructure = res.form;
                         renderForm(res.form);
-                        // ★★★ 修改處 2：資料載入成功後，才顯示按鈕 ★★★
-                        document.getElementById('btnContainer').style.display = 'block';
+                        // 資料載入成功後，淡入顯示按鈕
+                        const btnContainer = document.getElementById('btnContainer');
+                        btnContainer.style.display = 'block';
+                        btnContainer.classList.add('fade-in-up');
                     } else {
-                        document.getElementById('dynamicForm').innerHTML = `<p class="text-center text-red-500">${res.message}</p>`;
+                        document.getElementById('dynamicForm').innerHTML = `
+                            <div class="text-center py-8">
+                                <div class="text-4xl mb-2">🤔</div>
+                                <p class="text-rose-500 font-bold">${res.message}</p>
+                            </div>`;
                     }
                 })
-                .catch(() => document.getElementById('dynamicForm').innerHTML = "連線失敗，請檢查網路。");
+                .catch(() => {
+                    document.getElementById('dynamicForm').innerHTML = `
+                        <div class="text-center py-8">
+                            <div class="text-4xl mb-2">📶</div>
+                            <p class="text-gray-500">連線失敗，請檢查網路。</p>
+                        </div>`;
+                });
         };
 
         function renderForm(data) {
@@ -57,23 +114,61 @@
             const container = document.getElementById('dynamicForm');
             container.innerHTML = '';
 
-            data.fields.forEach(field => {
+            data.fields.forEach((field, index) => {
                 const wrapper = document.createElement('div');
-                wrapper.innerHTML = `<label class="block text-lg font-bold mb-2 text-left">${field.label}</label>`;
+                // 讓每個欄位依序彈出，增加動感
+                wrapper.className = "pop-in";
+                wrapper.style.animationDelay = `${index * 100}ms`;
+
+                // 標題樣式
+                wrapper.innerHTML = `
+                    <label class="block text-lg font-bold mb-3 text-gray-700 flex items-center gap-2">
+                        <span class="w-1.5 h-6 bg-rose-400 rounded-full inline-block"></span>
+                        ${field.label}
+                    </label>
+                `;
                 
                 if (field.type === 'text') {
-                    wrapper.innerHTML += `<input type="text" name="${field.id}" class="w-full border p-2 rounded focus:ring-2 focus:ring-red-500 outline-none" placeholder="請輸入...">`;
+                    // 輸入框改為圓潤風格
+                    wrapper.innerHTML += `
+                        <input type="text" name="${field.id}" 
+                            class="w-full px-5 py-3 bg-gray-50 border-2 border-gray-100 rounded-2xl text-gray-700 placeholder-gray-400 focus:bg-white focus:border-rose-300 focus:ring-4 focus:ring-rose-100 outline-none transition-all duration-300" 
+                            placeholder="請輸入${field.label}...">`;
                 } else if (field.type === 'radio_limit') {
-                    let opts = `<div class="space-y-2">`;
+                    let opts = `<div class="grid grid-cols-1 gap-3">`;
                     field.options.forEach(opt => {
                         const isFull = opt.remaining <= 0;
+                        // 進度條顏色邏輯
+                        const percent = (opt.current / opt.limit) * 100;
+                        let progressColor = 'bg-emerald-400'; // 綠
+                        if(percent > 50) progressColor = 'bg-amber-400'; // 黃
+                        if(percent > 85 || isFull) progressColor = 'bg-rose-400'; // 紅
+
                         opts += `
-                            <label class="block border p-3 rounded flex justify-between cursor-pointer transition hover:bg-red-50 ${isFull ? 'bg-gray-100 opacity-50 cursor-not-allowed' : 'bg-white'}">
-                                <div class="flex items-center gap-2">
-                                    <input type="radio" name="${field.id}" value="${opt.label}" ${isFull ? 'disabled' : ''} class="accent-red-600"> 
-                                    <span>${opt.label}</span>
+                            <label class="relative cursor-pointer group">
+                                <input type="radio" name="${field.id}" value="${opt.label}" ${isFull ? 'disabled' : ''} class="peer sr-only">
+                                
+                                <div class="p-4 rounded-2xl border-2 border-gray-100 bg-white hover:border-rose-200 transition-all duration-200 ${isFull ? 'opacity-60 bg-gray-50 grayscale cursor-not-allowed' : ''}">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-lg font-bold text-gray-700">${opt.label}</span>
+                                            <span class="check-icon opacity-0 transform scale-50 transition-all duration-300 text-rose-500">
+                                                <i class="fas fa-check-circle text-xl"></i>
+                                            </span>
+                                        </div>
+                                        <span class="text-xs font-bold px-2 py-1 rounded-lg ${isFull ? 'bg-gray-200 text-gray-500' : 'bg-rose-100 text-rose-600'}">
+                                            ${isFull ? '額滿' : `剩 ${opt.remaining} 名`}
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                                        <div class="${progressColor} h-2 rounded-full transition-all duration-1000 ease-out" style="width: ${percent}%"></div>
+                                    </div>
                                 </div>
-                                <span class="text-sm font-bold ${isFull ? 'text-red-500':'text-green-600'}">${isFull ? '額滿' : '餘 '+opt.remaining}</span>
+                                
+                                <div class="absolute top-1/2 right-4 -translate-y-1/2 opacity-0 peer-checked:opacity-100 text-rose-500 text-xl transition-opacity duration-300">
+                                    ✓
+                                </div>
                             </label>`;
                     });
                     wrapper.innerHTML += opts + `</div>`;
@@ -91,8 +186,15 @@
                 if (field.type === 'text') {
                     const el = document.querySelector(`input[name="${field.id}"]`);
                     const val = el ? el.value.trim() : "";
-                    if(!val) { isValid = false; if(el) el.classList.add('border-red-500'); }
-                    else { if(el) el.classList.remove('border-red-500'); }
+                    if(!val) { 
+                        isValid = false; 
+                        el.classList.add('border-rose-500', 'bg-rose-50'); 
+                        // 震動動畫
+                        el.parentElement.classList.add('animate-bounce');
+                        setTimeout(() => el.parentElement.classList.remove('animate-bounce'), 500);
+                    } else { 
+                        el.classList.remove('border-rose-500', 'bg-rose-50'); 
+                    }
                     answers[field.id] = val;
                 } else {
                     const checked = document.querySelector(`input[name="${field.id}"]:checked`);
@@ -101,15 +203,24 @@
                 }
             });
 
-            if (!isValid) return Swal.fire('提示', '請填寫完整資料', 'warning');
+            if (!isValid) return Swal.fire({
+                icon: 'warning',
+                title: '哎呀！',
+                text: '還有欄位沒填寫喔～',
+                confirmButtonColor: '#f43f5e',
+                confirmButtonText: '好，我填！'
+            });
             
-            // 按下送出後，隱藏按鈕並顯示處理中
-            btn.style.display = "none";
-            const loadingMsg = document.createElement('div');
-            loadingMsg.id = 'loadingMsg';
-            loadingMsg.className = 'text-center text-red-600 font-bold py-3 animate-pulse';
-            loadingMsg.innerHTML = '⏳ 資料傳送中，請稍候...';
-            btn.parentElement.appendChild(loadingMsg);
+            // 隱藏按鈕，顯示可愛的加載動畫
+            const btnContainer = document.getElementById('btnContainer');
+            const originalBtn = btnContainer.innerHTML; // 備份按鈕HTML
+            
+            btnContainer.innerHTML = `
+                <div class="text-center py-4 bg-rose-50 rounded-2xl border border-rose-100 animate-pulse">
+                    <span class="inline-block animate-spin text-2xl mr-2">💫</span>
+                    <span class="text-rose-500 font-bold">正在傳送愛心電波...</span>
+                </div>
+            `;
             
             fetch(API_URL, {
                 method: "POST",
@@ -119,16 +230,26 @@
             .then(r => r.json())
             .then(res => {
                 if(res.success) {
-                    Swal.fire('成功', '報名完成！', 'success').then(() => location.reload());
+                    Swal.fire({
+                        title: '報名成功！🎉',
+                        text: '謝謝您的熱血愛心！',
+                        icon: 'success',
+                        confirmButtonColor: '#f43f5e',
+                        confirmButtonText: '太棒了'
+                    }).then(() => location.reload());
                 } else {
-                    Swal.fire('哎呀', res.message, 'error').then(() => location.reload());
+                    Swal.fire({
+                        title: '糟糕...',
+                        text: res.message,
+                        icon: 'error',
+                        confirmButtonColor: '#f43f5e'
+                    }).then(() => location.reload());
                 }
             })
             .catch(() => {
-                Swal.fire('錯誤', '網路異常', 'error');
-                btn.style.display = "block";
-                const msg = document.getElementById('loadingMsg');
-                if(msg) msg.remove();
+                Swal.fire('嗚嗚...', '網路好像有點問題', 'error');
+                // 還原按鈕
+                btnContainer.innerHTML = originalBtn;
             });
         }
     </script>
