@@ -19,7 +19,7 @@
             <div class="text-center py-10 text-gray-400">正在讀取最新名額...</div>
         </form>
 
-        <div class="p-4 bg-gray-50 border-t">
+        <div class="p-4 bg-gray-50 border-t" id="btnContainer">
             <button onclick="submitData()" id="submitBtn" class="w-full bg-red-600 text-white font-bold py-3 rounded-lg shadow hover:bg-red-700 transition disabled:bg-gray-400">
                 送出報名
             </button>
@@ -99,8 +99,15 @@
 
             if (!isValid) return Swal.fire('提示', '請填寫完整資料', 'warning');
             
-            btn.disabled = true;
-            btn.innerText = "處理中...";
+            // ★★★ 修改處：讓按鈕消失，並顯示處理中文字 ★★★
+            btn.style.display = "none"; // 隱藏按鈕
+            
+            // 建立一個臨時的提示文字
+            const loadingMsg = document.createElement('div');
+            loadingMsg.id = 'loadingMsg';
+            loadingMsg.className = 'text-center text-red-600 font-bold py-3 animate-pulse';
+            loadingMsg.innerHTML = '⏳ 資料傳送中，請稍候...';
+            btn.parentElement.appendChild(loadingMsg);
             
             fetch(API_URL, {
                 method: "POST",
@@ -117,8 +124,10 @@
             })
             .catch(() => {
                 Swal.fire('錯誤', '網路異常', 'error');
-                btn.disabled = false;
-                btn.innerText = "送出報名";
+                // 如果失敗，把按鈕叫回來，讓使用者可以重試
+                btn.style.display = "block";
+                const msg = document.getElementById('loadingMsg');
+                if(msg) msg.remove();
             });
         }
     </script>
