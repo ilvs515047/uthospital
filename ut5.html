@@ -16,10 +16,13 @@
         </div>
 
         <form id="dynamicForm" class="p-6 space-y-6">
-            <div class="text-center py-10 text-gray-400">正在讀取最新名額...</div>
+            <div class="text-center py-10 text-gray-400">
+                <span class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mb-2"></span>
+                <br>正在讀取最新名額...
+            </div>
         </form>
 
-        <div class="p-4 bg-gray-50 border-t" id="btnContainer">
+        <div class="p-4 bg-gray-50 border-t" id="btnContainer" style="display: none;">
             <button onclick="submitData()" id="submitBtn" class="w-full bg-red-600 text-white font-bold py-3 rounded-lg shadow hover:bg-red-700 transition disabled:bg-gray-400">
                 送出報名
             </button>
@@ -34,18 +37,19 @@
         let formStructure = null;
 
         window.onload = () => {
-            // ★★★ 加上 &t=... 防止瀏覽器快取舊資料 ★★★
             fetch(API_URL + "?action=getForm&t=" + new Date().getTime())
                 .then(r => r.json())
                 .then(res => {
                     if (res.success) {
                         formStructure = res.form;
                         renderForm(res.form);
+                        // ★★★ 修改處 2：資料載入成功後，才顯示按鈕 ★★★
+                        document.getElementById('btnContainer').style.display = 'block';
                     } else {
                         document.getElementById('dynamicForm').innerHTML = `<p class="text-center text-red-500">${res.message}</p>`;
                     }
                 })
-                .catch(() => document.getElementById('dynamicForm').innerHTML = "連線失敗");
+                .catch(() => document.getElementById('dynamicForm').innerHTML = "連線失敗，請檢查網路。");
         };
 
         function renderForm(data) {
@@ -99,10 +103,8 @@
 
             if (!isValid) return Swal.fire('提示', '請填寫完整資料', 'warning');
             
-            // ★★★ 修改處：讓按鈕消失，並顯示處理中文字 ★★★
-            btn.style.display = "none"; // 隱藏按鈕
-            
-            // 建立一個臨時的提示文字
+            // 按下送出後，隱藏按鈕並顯示處理中
+            btn.style.display = "none";
             const loadingMsg = document.createElement('div');
             loadingMsg.id = 'loadingMsg';
             loadingMsg.className = 'text-center text-red-600 font-bold py-3 animate-pulse';
@@ -124,7 +126,6 @@
             })
             .catch(() => {
                 Swal.fire('錯誤', '網路異常', 'error');
-                // 如果失敗，把按鈕叫回來，讓使用者可以重試
                 btn.style.display = "block";
                 const msg = document.getElementById('loadingMsg');
                 if(msg) msg.remove();
