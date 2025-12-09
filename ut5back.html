@@ -3,19 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>捐血活動後台 (ID版)</title>
+    <title>活動後台管理</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 </head>
 <body class="bg-gray-100 min-h-screen py-10 px-4">
     <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-8">
-        <h1 class="text-3xl font-bold text-gray-800 mb-2">⚙️ 活動表單設計 (安全架構版)</h1>
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">⚙️ 活動表單設計 (V3.0)</h1>
         
         <div class="mb-6 bg-blue-50 p-4 rounded-lg">
             <label class="block text-sm font-bold mb-2">活動標題</label>
             <input type="text" id="formTitle" value="捐血活動報名" class="w-full border p-2 rounded">
-            <input type="password" id="adminPwd" value="1234" class="hidden"> </div>
+            <input type="password" id="adminPwd" value="1234" class="hidden">
+        </div>
 
         <div id="fields-container" class="space-y-4 mb-8"></div>
 
@@ -23,38 +24,41 @@
             <button onclick="addField('text')" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded">+ 新增文字題</button>
             <button onclick="addField('radio_limit')" class="px-4 py-2 bg-indigo-100 text-indigo-800 rounded">+ 新增限量選單</button>
             <div class="flex-1"></div>
-            <button onclick="clearDatabase()" class="px-4 py-2 bg-red-100 text-red-600 rounded">⚠️ 清空資料</button>
-            <button onclick="saveConfig()" class="px-6 py-2 bg-blue-600 text-white font-bold rounded shadow">儲存並發佈</button>
+            <button onclick="clearDatabase()" class="px-4 py-2 bg-red-100 text-red-600 rounded hover:bg-red-200">⚠️ 清空所有資料</button>
+            <button onclick="saveConfig()" class="px-6 py-2 bg-blue-600 text-white font-bold rounded shadow hover:bg-blue-700">儲存並發佈</button>
         </div>
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbyVbDoPrrdD8enuDWxaies6Pr9u6myo6DAGBvjnnPKqorPDWxO3QKYIj6ODb8zK1uebEA/exec"; // ★記得換★
+        // ▼▼▼ 請替換成你的 GAS 網址 ▼▼▼
+        const API_URL = "https://script.google.com/macros/s/你的ID/exec"; 
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-        // 產生亂數 ID 的工具
         function generateUID() {
             return 'f_' + Math.random().toString(36).substr(2, 9);
         }
 
         window.onload = async function() {
             Swal.showLoading();
-            const res = await fetch(API_URL + "?action=getSettings").then(r => r.json());
-            Swal.close();
-            if(res.success && res.config) {
-                document.getElementById('formTitle').value = res.config.title;
-                res.config.fields.forEach(f => renderField(f)); // f 裡面現在有 ID 了
-            } else {
-                renderField({ id: generateUID(), type: 'text', label: '姓名' });
-                renderField({ id: generateUID(), type: 'text', label: '電話' });
-                renderField({ id: generateUID(), type: 'radio_limit', label: '選擇時段', options: [{label:'13:00', limit:6}] });
+            try {
+                const res = await fetch(API_URL + "?action=getSettings").then(r => r.json());
+                Swal.close();
+                if(res.success && res.config) {
+                    document.getElementById('formTitle').value = res.config.title;
+                    res.config.fields.forEach(f => renderField(f));
+                } else {
+                    // 初始化預設欄位
+                    renderField({ id: generateUID(), type: 'text', label: '姓名' });
+                    renderField({ id: generateUID(), type: 'text', label: '電話' });
+                    renderField({ id: generateUID(), type: 'radio_limit', label: '選擇時段', options: [{label:'13:00', limit:6}] });
+                }
+                new Sortable(document.getElementById('fields-container'), { animation: 150 });
+            } catch(e) {
+                Swal.fire('錯誤', '無法讀取後台設定，請檢查網址或權限', 'error');
             }
-            
-            // 啟用拖曳排序
-            new Sortable(document.getElementById('fields-container'), { animation: 150 });
         };
 
         function addField(type) {
-            // 新增時立刻給一個永久 ID
             const defaultData = type === 'text' 
                 ? { id: generateUID(), type: 'text', label: '' } 
                 : { id: generateUID(), type: 'radio_limit', label: '', options: [{label: '', limit: 10}] };
@@ -64,18 +68,17 @@
         function renderField(data) {
             const container = document.getElementById('fields-container');
             const div = document.createElement('div');
-            div.className = "field-item bg-white border-2 border-gray-200 rounded-lg p-4 relative";
-            // 把 ID 藏在 dataset 裡
+            div.className = "field-item bg-white border-2 border-gray-200 rounded-lg p-4 relative cursor-move";
             div.dataset.id = data.id; 
             div.dataset.type = data.type;
             
             let html = `
                 <div class="flex justify-between items-center mb-3">
                     <div class="flex-1">
-                        <span class="text-xs text-gray-400 font-mono">ID: ${data.id}</span>
+                        <span class="text-xs text-gray-400 font-mono select-none">ID: ${data.id}</span>
                         <input type="text" placeholder="題目名稱" class="field-label w-full text-lg font-bold border-b focus:border-blue-500 outline-none" value="${data.label}">
                     </div>
-                    <button onclick="this.closest('.field-item').remove()" class="text-red-400 ml-4 text-xl">×</button>
+                    <button onclick="this.closest('.field-item').remove()" class="text-red-400 ml-4 text-xl font-bold">×</button>
                 </div>
             `;
 
@@ -83,14 +86,14 @@
                 html += `<div class="options-list space-y-2 pl-4 border-l-4 border-indigo-100">`;
                 const opts = data.options || [];
                 opts.forEach(opt => html += getOptionHtml(opt.label, opt.limit));
-                html += `</div><button onclick="addOption(this)" class="mt-2 text-sm text-indigo-600">+ 新增選項</button>`;
+                html += `</div><button onclick="addOption(this)" class="mt-2 text-sm text-indigo-600 font-bold">+ 新增選項</button>`;
             }
             div.innerHTML = html;
             container.appendChild(div);
         }
 
         function getOptionHtml(label="", limit=10) {
-            return `<div class="option-row flex gap-2 items-center"><input type="text" class="opt-label border p-1 rounded flex-1" value="${label}" placeholder="選項"><input type="number" class="opt-limit border p-1 w-20" value="${limit}"><button onclick="this.parentElement.remove()" class="text-red-300">×</button></div>`;
+            return `<div class="option-row flex gap-2 items-center"><input type="text" class="opt-label border p-1 rounded flex-1" value="${label}" placeholder="選項"><input type="number" class="opt-limit border p-1 w-20 text-center" value="${limit}"><button onclick="this.parentElement.remove()" class="text-red-300 font-bold">×</button></div>`;
         }
         function addOption(btn) { btn.previousElementSibling.insertAdjacentHTML('beforeend', getOptionHtml()); }
 
@@ -102,7 +105,7 @@
                 if (!label) return;
                 
                 const fieldData = { 
-                    id: item.dataset.id, // 取出隱藏的 ID
+                    id: item.dataset.id,
                     type: item.dataset.type, 
                     label: label 
                 };
@@ -119,10 +122,11 @@
                 fields.push(fieldData);
             });
 
-            Swal.fire({ title: '儲存中...', didOpen: () => Swal.showLoading() });
+            Swal.fire({ title: '處理中...', didOpen: () => Swal.showLoading() });
             
             fetch(API_URL, {
                 method: "POST",
+                headers: { "Content-Type": "text/plain" },
                 body: JSON.stringify({ action: "saveConfig", password: "1234", config: { title, fields } })
             })
             .then(r => r.json())
@@ -131,9 +135,10 @@
 
         function clearDatabase() {
             Swal.fire({
-                title: '確定清空?', text: '這會刪除所有報名資料！', icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33'
+                title: '⚠️ 確定清空?', text: '這將刪除所有已報名的資料，且無法復原！(請確認您已經備份或活動已結束)', icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: '是的，清空'
             }).then((res) => {
                 if(res.isConfirmed) {
+                    Swal.showLoading();
                     fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "clearData", password: "1234" }) })
                     .then(r => r.json()).then(d => Swal.fire('完成', d.message, 'success'));
                 }
