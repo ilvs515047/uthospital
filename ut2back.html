@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>可愛風活動後台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Varela+Round&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Zen Maru Gothic', 'Varela Round', sans-serif; }
+        
+        /* 背景流動動畫 */
+        @keyframes blob {
+            0% { transform: translate(0px, 0px) scale(1); }
+            33% { transform: translate(30px, -50px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+            100% { transform: translate(0px, 0px) scale(1); }
+        }
+        .animate-blob { animation: blob 7s infinite; }
+        .animation-delay-2000 { animation-delay: 2s; }
+        .animation-delay-4000 { animation-delay: 4s; }
+
+        /* 卡片進場動畫 */
+        .pop-in { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes popIn { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-rose-100 via-pink-50 to-orange-50 min-h-screen p-4 md:p-8 text-gray-700 relative overflow-x-hidden">
+
+    <div class="fixed top-0 left-0 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
+    <div class="fixed top-0 right-0 w-72 h-72 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
+    <div class="fixed -bottom-8 left-20 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
+
+    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8 relative z-10">
+        
+        <div class="lg:col-span-2 space-y-6">
+            
+            <div class="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl border border-white p-8">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="bg-rose-100 p-3 rounded-2xl text-rose-500 text-2xl"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-800">宜蘭廠活動表單設計</h1>
+                        <p class="text-sm text-gray-500">打造專屬UT5的可愛報名頁</p>
+                    </div>
+                </div>
+                
+                <div class="bg-rose-50/50 p-4 rounded-2xl border border-rose-100">
+                    <label class="block text-sm font-bold mb-2 text-rose-500 ml-1">活動大標題</label>
+                    <input type="text" id="formTitle" value="捐血活動報名" class="w-full px-4 py-3 rounded-xl border-2 border-rose-100 focus:border-rose-400 focus:ring-4 focus:ring-rose-100 outline-none transition bg-white text-lg font-bold text-gray-700 placeholder-rose-200">
+                    <input type="password" id="adminPwd" value="1234" class="hidden">
+                </div>
+            </div>
+
+            <div id="fields-container" class="space-y-4 min-h-[100px]"></div>
+
+            <div class="bg-white/80 backdrop-blur-xl rounded-3xl shadow-lg border border-white p-4 flex flex-wrap gap-3 items-center justify-between sticky bottom-4 z-20">
+                <div class="flex gap-2">
+                    <button onclick="addField('text')" class="px-5 py-3 bg-white border-2 border-indigo-100 text-indigo-500 rounded-2xl hover:bg-indigo-50 hover:border-indigo-300 font-bold transition shadow-sm active:scale-95 flex items-center gap-2">
+                        <i class="fa-solid fa-font"></i> <span class="hidden sm:inline">文字題</span>
+                    </button>
+                    <button onclick="addField('radio_limit')" class="px-5 py-3 bg-white border-2 border-rose-100 text-rose-500 rounded-2xl hover:bg-rose-50 hover:border-rose-300 font-bold transition shadow-sm active:scale-95 flex items-center gap-2">
+                        <i class="fa-solid fa-list-check"></i> <span class="hidden sm:inline">限量選項</span>
+                    </button>
+                </div>
+                
+                <div class="flex gap-2">
+                            <button onclick="clearDatabase()" class="px-5 py-3 bg-red-50 text-red-500 border-2 border-transparent hover:border-red-200 rounded-2xl font-bold transition active:scale-95 flex items-center gap-2" title="清空資料">
+                                <i class="fa-solid fa-trash-can"></i>
+                                <span class="hidden sm:inline">清空歷史資料(慎用)</span>
+                            </button>
+                    <button onclick="saveConfig()" class="px-8 py-3 bg-gradient-to-r from-rose-400 to-pink-500 text-white rounded-2xl font-bold shadow-lg shadow-rose-200 hover:shadow-rose-300 hover:-translate-y-1 transition active:scale-95 flex items-center gap-2">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> 儲存發佈
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-1">
+            <div class="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl border border-white p-6 sticky top-6">
+                <div class="flex justify-between items-center mb-6">
+                    <div class="flex items-center gap-2">
+                        <span class="bg-amber-100 text-amber-500 p-2 rounded-xl"><i class="fa-solid fa-chart-pie"></i></span>
+                        <h2 class="text-xl font-bold text-gray-800">即時戰況</h2>
+                    </div>
+                    <button onclick="loadStats()" class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:bg-rose-500 hover:text-white transition flex items-center justify-center shadow-sm active:rotate-180 duration-500">
+                        <i class="fa-solid fa-rotate-right"></i>
+                    </button>
+                </div>
+                
+                <div id="stats-container" class="space-y-4 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
+                    <div class="text-center text-rose-300 py-10 font-bold">
+                        <i class="fa-solid fa-spinner fa-spin text-2xl mb-2"></i><br>
+                        努力讀取中...
+                    </div>
+                </div>
+
+                <div class="mt-6 pt-6 border-t border-dashed border-gray-200">
+                    <button onclick="downloadCSV()" class="w-full py-3 bg-emerald-50 text-emerald-600 font-bold rounded-2xl border-2 border-emerald-100 hover:bg-emerald-100 hover:border-emerald-200 transition active:scale-95 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-file-csv text-xl"></i> 下載報表
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ▼▼▼ 請替換成你的 GAS 網址 ▼▼▼
+        const API_URL = "https://script.google.com/macros/s/AKfycbzdnu5QfsXLkXg0fXXte0lzTGtuPAR4Ewi0YRbos-Xp-J84IZhj3jv-7lEaRD-SAwuQdQ/exec"; 
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+        function generateUID() { return 'f_' + Math.random().toString(36).substr(2, 9); }
+
+        window.onload = async function() {
+            Swal.fire({
+                title: 'Loading...', 
+                text: '正在連接雲端資料庫 ☁️',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+            try {
+                const res = await fetch(API_URL + "?action=getSettings").then(r => r.json());
+                Swal.close();
+                if(res.success && res.config) {
+                    document.getElementById('formTitle').value = res.config.title;
+                    res.config.fields.forEach(f => renderField(f));
+                } else {
+                    renderField({ id: generateUID(), type: 'text', label: '姓名' });
+                    renderField({ id: generateUID(), type: 'text', label: '電話' });
+                    renderField({ id: generateUID(), type: 'radio_limit', label: '選擇時段', options: [{label:'13:00', limit:6}] });
+                }
+                new Sortable(document.getElementById('fields-container'), { animation: 150, handle: '.drag-handle', ghostClass: 'opacity-50' });
+                loadStats();
+            } catch(e) { Swal.fire('錯誤', '無法連接資料庫', 'error'); }
+        };
+
+        function addField(type) {
+            renderField(type === 'text' ? { id: generateUID(), type: 'text', label: '' } : { id: generateUID(), type: 'radio_limit', label: '', options: [{label: '', limit: 10}] });
+            // 自動捲動到底部
+            setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 100);
+        }
+
+        function renderField(data) {
+            const container = document.getElementById('fields-container');
+            const div = document.createElement('div');
+            // 卡片樣式
+            div.className = "field-item bg-white rounded-2xl shadow-sm border border-gray-100 p-5 relative hover:shadow-md hover:border-rose-200 transition-all duration-300 pop-in";
+            div.dataset.id = data.id; 
+            div.dataset.type = data.type;
+            
+            let html = `
+                <div class="flex justify-between items-start mb-4">
+                    <div class="flex items-center gap-3 flex-1">
+                        <div class="drag-handle cursor-grab text-gray-300 hover:text-gray-500 p-1">
+                            <i class="fa-solid fa-grip-vertical"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="text-[10px] text-gray-400 font-mono bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100">${data.id}</span>
+                                <span class="text-xs font-bold ${data.type === 'text' ? 'text-indigo-400 bg-indigo-50' : 'text-rose-400 bg-rose-50'} px-2 py-0.5 rounded-full">
+                                    ${data.type === 'text' ? '<i class="fa-solid fa-font"></i> 文字' : '<i class="fa-solid fa-list"></i> 限量'}
+                                </span>
+                            </div>
+                            <input type="text" placeholder="請輸入題目名稱..." class="field-label w-full text-lg font-bold text-gray-700 border-b-2 border-transparent hover:border-gray-200 focus:border-rose-400 outline-none bg-transparent transition px-1" value="${data.label}">
+                        </div>
+                    </div>
+                    <button onclick="deleteField(this)" class="text-gray-300 hover:text-red-400 hover:bg-red-50 w-8 h-8 rounded-full transition flex items-center justify-center">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
+            `;
+
+            if (data.type === 'radio_limit') {
+                html += `<div class="options-list space-y-2 pl-8 border-l-2 border-dashed border-rose-100 ml-2">`;
+                const opts = data.options || [];
+                opts.forEach(opt => html += getOptionHtml(opt.label, opt.limit));
+                html += `</div>
+                <button onclick="addOption(this)" class="ml-10 mt-3 text-sm text-rose-500 hover:text-rose-700 font-bold flex items-center gap-1 bg-rose-50 px-3 py-1.5 rounded-lg hover:bg-rose-100 transition inline-block">
+                    <i class="fa-solid fa-plus"></i> 新增選項
+                </button>`;
+            }
+            div.innerHTML = html;
+            container.appendChild(div);
+        }
+
+        function deleteField(btn) {
+            const item = btn.closest('.field-item');
+            item.style.transform = 'scale(0.9) opacity(0)';
+            setTimeout(() => item.remove(), 300);
+        }
+
+        function getOptionHtml(label="", limit=10) {
+            return `
+                <div class="option-row flex gap-2 items-center pop-in group">
+                    <div class="w-2 h-2 rounded-full bg-rose-200"></div>
+                    <input type="text" class="opt-label bg-gray-50 border border-gray-100 rounded-xl px-3 py-2 flex-1 text-sm focus:bg-white focus:border-rose-300 focus:ring-2 focus:ring-rose-100 outline-none transition" value="${label}" placeholder="選項名稱 (如: 13:00)">
+                    <div class="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-xl border border-gray-100">
+                        <span class="text-xs text-gray-400 font-bold">名額</span>
+                        <input type="number" class="opt-limit bg-transparent w-12 text-center text-sm font-bold text-gray-700 outline-none" value="${limit}">
+                    </div>
+                    <button onclick="this.parentElement.remove()" class="text-gray-300 hover:text-red-400 opacity-0 group-hover:opacity-100 transition p-1">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            `;
+        }
+        function addOption(btn) { btn.previousElementSibling.insertAdjacentHTML('beforeend', getOptionHtml()); }
+
+        function saveConfig() {
+            const title = document.getElementById('formTitle').value;
+            const fields = [];
+            document.querySelectorAll('.field-item').forEach(item => {
+                const label = item.querySelector('.field-label').value.trim();
+                if (!label) return;
+                const fieldData = { id: item.dataset.id, type: item.dataset.type, label: label };
+                if (fieldData.type === 'radio_limit') {
+                    fieldData.options = [];
+                    item.querySelectorAll('.option-row').forEach(row => {
+                        fieldData.options.push({ label: row.querySelector('.opt-label').value, limit: row.querySelector('.opt-limit').value });
+                    });
+                }
+                fields.push(fieldData);
+            });
+
+            Swal.fire({ 
+                title: '儲存中...', 
+                html: '正在更新前台設定 📡',
+                didOpen: () => Swal.showLoading() 
+            });
+            
+            fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "saveConfig", password: "1234", config: { title, fields } }) })
+            .then(r => r.json()).then(res => { 
+                Swal.fire({
+                    icon: res.success ? 'success' : 'error',
+                    title: res.success ? '發佈成功！' : '失敗',
+                    text: res.message,
+                    confirmButtonColor: '#fb7185'
+                });
+                if(res.success) loadStats(); 
+            });
+        }
+
+        function loadStats() {
+            const container = document.getElementById('stats-container');
+            const btnIcon = document.querySelector('.fa-rotate-right');
+            if(btnIcon) btnIcon.classList.add('fa-spin'); // 讓圖標轉動
+
+            fetch(API_URL + "?action=getForm&t=" + new Date().getTime()).then(r => r.json()).then(res => {
+                if(btnIcon) btnIcon.classList.remove('fa-spin');
+                if(res.success) renderStats(res.form);
+                else container.innerHTML = `<div class="text-rose-400 text-center py-4 bg-rose-50 rounded-xl">尚無數據 💤</div>`;
+            }).catch(() => {
+                if(btnIcon) btnIcon.classList.remove('fa-spin');
+                container.innerHTML = `<div class="text-gray-400 text-center text-sm">更新失敗</div>`
+            });
+        }
+
+        function renderStats(form) {
+            const container = document.getElementById('stats-container');
+            container.innerHTML = '';
+            let hasLimitField = false;
+            form.fields.forEach(field => {
+                if (field.type === 'radio_limit') {
+                    hasLimitField = true;
+                    let html = `
+                        <div class="bg-gray-50/80 rounded-2xl p-4 border border-gray-100 hover:border-rose-200 transition">
+                            <h3 class="font-bold text-gray-700 mb-3 text-sm flex items-center gap-2">
+                                <span class="w-1.5 h-4 bg-rose-400 rounded-full"></span>
+                                ${field.label}
+                            </h3>
+                            <div class="space-y-3">
+                    `;
+                    field.options.forEach(opt => {
+                        const percent = Math.min(100, (opt.current / opt.limit) * 100).toFixed(1);
+                        const isFull = opt.current >= opt.limit;
+                        let barColor = 'bg-emerald-400';
+                        if(percent > 50) barColor = 'bg-amber-400';
+                        if(percent > 85 || isFull) barColor = 'bg-rose-400';
+
+                        html += `
+                            <div>
+                                <div class="flex justify-between mb-1 text-xs">
+                                    <span class="text-gray-600 font-medium">${opt.label}</span>
+                                    <span class="font-mono ${isFull ? 'text-rose-500 font-bold' : 'text-gray-400'}">
+                                        ${opt.current} / ${opt.limit}
+                                    </span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                                    <div class="${barColor} h-2.5 rounded-full transition-all duration-700 ease-out" style="width: ${percent}%"></div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    html += `</div></div>`;
+                    container.innerHTML += html;
+                }
+            });
+            if (!hasLimitField) container.innerHTML = `<div class="text-center text-gray-400 text-sm py-8">此表單沒有設定限量選項<br>暫無名額統計 🍃</div>`;
+        }
+
+        async function downloadCSV() {
+            Swal.fire({ 
+                title: '打包中...', 
+                html: '正在為您製作 Excel 報表 🎁',
+                didOpen: () => Swal.showLoading() 
+            });
+            try {
+                const res = await fetch(API_URL + "?action=getCSV").then(r => r.json());
+                if (res.success) {
+                    const blob = new Blob([res.csv], { type: 'text/csv;charset=utf-8;' });
+                    const link = document.createElement("a");
+                    link.href = URL.createObjectURL(blob);
+                    link.download = res.fileName;
+                    link.click();
+                    Swal.close();
+                } else Swal.fire('提示', res.message, 'info');
+            } catch(e) { Swal.fire('錯誤', '下載失敗', 'error'); }
+        }
+
+        function clearDatabase() {
+            Swal.fire({
+                title: '清空確認', 
+                html: "這會刪除所有資料且<b style='color:#f43f5e'>無法復原</b>！<br>建議先下載備份喔。", 
+                icon: 'warning', 
+                showDenyButton: true, 
+                showCancelButton: true, 
+                confirmButtonText: '狠心清空', 
+                denyButtonText: '下載並清空', 
+                cancelButtonText: '再想想',
+                confirmButtonColor: '#ef4444',
+                denyButtonColor: '#3b82f6',
+            }).then((result) => {
+                if (result.isDenied) { downloadCSV(); setTimeout(() => executeClear(), 2000); }
+                else if (result.isConfirmed) { executeClear(); }
+            });
+        }
+
+        function executeClear() {
+            Swal.fire({ title: '大掃除中...', didOpen: () => Swal.showLoading() });
+            fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "clearData", password: "1234" }) })
+            .then(r => r.json()).then(d => {
+                if(d.success) { 
+                    Swal.fire({ title: '乾淨溜溜！✨', icon: 'success', confirmButtonColor: '#f43f5e' }); 
+                    loadStats(); 
+                }
+                else Swal.fire('失敗', d.message, 'error');
+            });
+        }
+        
+        // 每 10 秒更新統計
+        setInterval(loadStats, 10000);
+    </script>
+</body>
+</html>
