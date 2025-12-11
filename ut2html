@@ -47,12 +47,12 @@
             </div>
         </div>
         
-        <p class="text-center text-gray-400 text-xs mt-6 font-medium">© UT5 捐血中心 • 熱血有你真好 ❤️</p>
+        <p class="text-center text-gray-400 text-xs mt-6 font-medium">© UT土城 捐血中心 • 熱血有你真好 ❤️</p>
     </div>
 
     <script>
         // ▼▼▼ 請替換成你的 GAS 網址 ▼▼▼
-        const API_URL = "https://script.google.com/macros/s/AKfycbzdnu5QfsXLkXg0fXXte0lzTGtuPAR4Ewi0YRbos-Xp-J84IZhj3jv-7lEaRD-SAwuQdQ/exec"; 
+        const API_URL = "https://script.google.com/macros/s/AKfycbwLe8v81YiqAJCpjJI8hbVMRf7G5SLQ7hWYs0kwj0geVwPZhJRyKeDF40ralFgZTZhu/exec"; 
         // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
         let formStructure = null;
