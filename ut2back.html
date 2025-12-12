@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UT土城捐血活動後台</title>
+    <title>宜蘭廠捐血活動後台</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
@@ -43,16 +43,28 @@
                 <div class="flex items-center gap-3 mb-6">
                     <div class="bg-rose-100 p-3 rounded-2xl text-rose-500 text-2xl"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
                     <div>
-                        <h1 class="text-2xl font-bold text-gray-800">土城廠活動表單設計</h1>
-                        <p class="text-sm text-gray-500">打造專屬UT土城的可愛報名頁</p>
+                        <h1 class="text-2xl font-bold text-gray-800">宜蘭廠活動表單設計</h1>
+                        <p class="text-sm text-gray-500">打造專屬UT5的可愛報名頁</p>
                     </div>
                 </div>
                 
-                <div class="bg-rose-50/50 p-4 rounded-2xl border border-rose-100">
+                <div class="bg-rose-50/50 p-4 rounded-2xl border border-rose-100 mb-4">
                     <label class="block text-sm font-bold mb-2 text-rose-500 ml-1">活動大標題</label>
                     <input type="text" id="formTitle" value="捐血活動報名" class="w-full px-4 py-3 rounded-xl border-2 border-rose-100 focus:border-rose-400 focus:ring-4 focus:ring-rose-100 outline-none transition bg-white text-lg font-bold text-gray-700 placeholder-rose-200">
                     <input type="password" id="adminPwd" value="1234" class="hidden">
                 </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100">
+                        <label class="block text-sm font-bold mb-2 text-indigo-500 ml-1"><i class="fa-regular fa-clock"></i> 開始時間</label>
+                        <input type="datetime-local" id="startTime" class="w-full px-4 py-2 rounded-xl border-2 border-indigo-100 focus:border-indigo-400 outline-none transition bg-white text-gray-700 font-mono">
+                    </div>
+                    <div class="bg-orange-50/50 p-4 rounded-2xl border border-orange-100">
+                        <label class="block text-sm font-bold mb-2 text-orange-500 ml-1"><i class="fa-solid fa-ban"></i> 截止時間</label>
+                        <input type="datetime-local" id="endTime" class="w-full px-4 py-2 rounded-xl border-2 border-orange-100 focus:border-orange-400 outline-none transition bg-white text-gray-700 font-mono">
+                    </div>
+                </div>
+                <p class="text-xs text-gray-400 mt-2 ml-2">* 若留空代表不限制該項時間</p>
             </div>
 
             <div id="fields-container" class="space-y-4 min-h-[100px]"></div>
@@ -126,6 +138,11 @@
                 Swal.close();
                 if(res.success && res.config) {
                     document.getElementById('formTitle').value = res.config.title;
+                    
+                    // ★ 讀取時間設定
+                    document.getElementById('startTime').value = res.config.startTime || "";
+                    document.getElementById('endTime').value = res.config.endTime || "";
+
                     res.config.fields.forEach(f => renderField(f));
                 } else {
                     renderField({ id: generateUID(), type: 'text', label: '姓名' });
@@ -139,14 +156,12 @@
 
         function addField(type) {
             renderField(type === 'text' ? { id: generateUID(), type: 'text', label: '' } : { id: generateUID(), type: 'radio_limit', label: '', options: [{label: '', limit: 10}] });
-            // 自動捲動到底部
             setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 100);
         }
 
         function renderField(data) {
             const container = document.getElementById('fields-container');
             const div = document.createElement('div');
-            // 卡片樣式
             div.className = "field-item bg-white rounded-2xl shadow-sm border border-gray-100 p-5 relative hover:shadow-md hover:border-rose-200 transition-all duration-300 pop-in";
             div.dataset.id = data.id; 
             div.dataset.type = data.type;
@@ -211,6 +226,10 @@
 
         function saveConfig() {
             const title = document.getElementById('formTitle').value;
+            // ★ 獲取時間設定
+            const startTime = document.getElementById('startTime').value;
+            const endTime = document.getElementById('endTime').value;
+
             const fields = [];
             document.querySelectorAll('.field-item').forEach(item => {
                 const label = item.querySelector('.field-label').value.trim();
@@ -227,11 +246,19 @@
 
             Swal.fire({ 
                 title: '儲存中...', 
-                html: '正在更新前台設定 📡',
+                html: '正在更新前台設定 📡', 
                 didOpen: () => Swal.showLoading() 
             });
             
-            fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "saveConfig", password: "1234", config: { title, fields } }) })
+            // ★ 將時間設定一同發送
+            fetch(API_URL, { 
+                method: "POST", 
+                body: JSON.stringify({ 
+                    action: "saveConfig", 
+                    password: "1234", 
+                    config: { title, startTime, endTime, fields } 
+                }) 
+            })
             .then(r => r.json()).then(res => { 
                 Swal.fire({
                     icon: res.success ? 'success' : 'error',
@@ -246,7 +273,7 @@
         function loadStats() {
             const container = document.getElementById('stats-container');
             const btnIcon = document.querySelector('.fa-rotate-right');
-            if(btnIcon) btnIcon.classList.add('fa-spin'); // 讓圖標轉動
+            if(btnIcon) btnIcon.classList.add('fa-spin'); 
 
             fetch(API_URL + "?action=getForm&t=" + new Date().getTime()).then(r => r.json()).then(res => {
                 if(btnIcon) btnIcon.classList.remove('fa-spin');
@@ -304,7 +331,7 @@
         async function downloadCSV() {
             Swal.fire({ 
                 title: '打包中...', 
-                html: '正在為您製作 Excel 報表 🎁',
+                html: '正在為您製作 Excel 報表 🎁', 
                 didOpen: () => Swal.showLoading() 
             });
             try {
@@ -350,7 +377,6 @@
             });
         }
         
-        // 每 10 秒更新統計
         setInterval(loadStats, 10000);
     </script>
 </body>
