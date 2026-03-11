@@ -27,7 +27,7 @@
             <div class="bg-gradient-to-r from-rose-400 to-pink-500 p-8 text-center text-white relative">
                 <div class="absolute top-0 left-0 w-full h-full opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
                 <div class="relative z-10">
-                    <div class="text-4xl mb-2">🩸</div>
+                    <div class="text-4xl mb-2"></div>
                     <h1 id="pageTitle" class="text-2xl font-bold tracking-wide">載入中...</h1>
                     <p class="text-pink-100 mt-2 text-sm bg-white/20 inline-block px-3 py-1 rounded-full">✨ 請填寫下方資訊 ✨</p>
                 </div>
@@ -47,7 +47,7 @@
             </div>
         </div>
         
-        <p class="text-center text-gray-400 text-xs mt-6 font-medium">© UT5 捐血中心 • 熱血有你真好 ❤️</p>
+        <p class="text-center text-gray-400 text-xs mt-6 font-medium">© ❤️</p>
     </div>
 
     <script>
@@ -181,7 +181,7 @@
             
             fetch(API_URL, { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ action: "submit", answers: answers }) })
             .then(r => r.json()).then(res => {
-                if(res.success) Swal.fire({ title: '報名成功！🎉', text: '謝謝您的熱血愛心！', icon: 'success', confirmButtonColor: '#f43f5e' }).then(() => location.reload());
+                if(res.success) Swal.fire({ title: '報名成功！🎉', text: '謝謝您的參與！', icon: 'success', confirmButtonColor: '#f43f5e' }).then(() => location.reload());
                 else Swal.fire({ title: '糟糕...', text: res.message, icon: 'error' }).then(() => location.reload());
             })
             .catch(() => {
