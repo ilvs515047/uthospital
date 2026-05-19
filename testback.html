@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>土城廠活動後台</title>
+    <title>測試活動後台</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
@@ -80,10 +80,10 @@
                 </div>
                 
                 <div class="flex gap-2">
-                    <button onclick="clearDatabase()" class="px-5 py-3 bg-red-50 text-red-500 border-2 border-transparent hover:border-red-200 rounded-2xl font-bold transition active:scale-95 flex items-center gap-2" title="清空資料">
-                        <i class="fa-solid fa-trash-can"></i>
-                        <span class="hidden sm:inline">清空歷史資料(新任務必點)</span>
-                    </button>
+                            <button onclick="clearDatabase()" class="px-5 py-3 bg-red-50 text-red-500 border-2 border-transparent hover:border-red-200 rounded-2xl font-bold transition active:scale-95 flex items-center gap-2" title="清空資料">
+                                <i class="fa-solid fa-trash-can"></i>
+                                <span class="hidden sm:inline">清空歷史資料(新任務必點)</span>
+                            </button>
                     <button onclick="saveConfig()" class="px-8 py-3 bg-gradient-to-r from-rose-400 to-pink-500 text-white rounded-2xl font-bold shadow-lg shadow-rose-200 hover:shadow-rose-300 hover:-translate-y-1 transition active:scale-95 flex items-center gap-2">
                         <i class="fa-solid fa-cloud-arrow-up"></i> 儲存發佈
                     </button>
@@ -110,11 +110,7 @@
                     </div>
                 </div>
 
-                <div class="mt-6 pt-6 border-t border-dashed border-gray-200 space-y-3">
-                    <button onclick="clearDatabase()" class="w-full py-3 bg-red-50 text-red-600 font-bold rounded-2xl border-2 border-red-100 hover:bg-red-100 hover:border-red-200 transition active:scale-95 flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-trash-can text-xl"></i> 清空報名數據
-                    </button>
-                    
+                <div class="mt-6 pt-6 border-t border-dashed border-gray-200">
                     <button onclick="downloadCSV()" class="w-full py-3 bg-emerald-50 text-emerald-600 font-bold rounded-2xl border-2 border-emerald-100 hover:bg-emerald-100 hover:border-emerald-200 transition active:scale-95 flex items-center justify-center gap-2">
                         <i class="fa-solid fa-file-csv text-xl"></i> 下載報表
                     </button>
