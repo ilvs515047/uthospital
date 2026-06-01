@@ -221,7 +221,6 @@
         }
         function addOption(btn) { btn.previousElementSibling.insertAdjacentHTML('beforeend', getOptionHtml()); }
 
-        // ★ 已經改寫為透過 Swal.fire 驗證密碼的 saveConfig
         async function saveConfig() {
             const title = document.getElementById('formTitle').value;
             const startTime = document.getElementById('startTime').value;
@@ -241,7 +240,6 @@
                 fields.push(fieldData);
             });
 
-            // 跳出密碼驗證視窗
             const { value: formPassword } = await Swal.fire({
                 title: '權限驗證',
                 input: 'password',
@@ -253,7 +251,7 @@
                 confirmButtonColor: '#fb7185'
             });
 
-            if (!formPassword) return; // 按下取消或未輸入則停止執行
+            if (!formPassword) return;
 
             Swal.fire({ 
                 title: '儲存中...', 
@@ -265,7 +263,7 @@
                 method: "POST", 
                 body: JSON.stringify({ 
                     action: "saveConfig", 
-                    password: formPassword, // 傳送剛剛輸入的密碼
+                    password: formPassword, 
                     config: { title, startTime, endTime, fields } 
                 }) 
             })
@@ -338,25 +336,55 @@
             if (!hasLimitField) container.innerHTML = `<div class="text-center text-gray-400 text-sm py-8">此表單沒有設定限量選項<br>暫無名額統計 🍃</div>`;
         }
 
-        async function downloadCSV() {
+        // ★ 修改 1：下載 CSV 功能現在會透過 POST 傳遞密碼
+        async function downloadCSV(silentPassword = null) {
+            let pwd = silentPassword;
+            if (!pwd) {
+                const { value: formPassword } = await Swal.fire({
+                    title: '權限驗證',
+                    input: 'password',
+                    inputLabel: '請輸入後台管理密碼以下載報表',
+                    inputPlaceholder: '輸入密碼...',
+                    showCancelButton: true,
+                    confirmButtonText: '確認下載',
+                    cancelButtonText: '取消',
+                    confirmButtonColor: '#10b981'
+                });
+                if (!formPassword) return false;
+                pwd = formPassword;
+            }
+
             Swal.fire({ 
                 title: '打包中...', 
                 html: '正在為您製作 Excel 報表 🎁', 
                 didOpen: () => Swal.showLoading() 
             });
+            
             try {
-                const res = await fetch(API_URL + "?action=getCSV").then(r => r.json());
+                const res = await fetch(API_URL, { 
+                    method: "POST", 
+                    body: JSON.stringify({ action: "getCSV", password: pwd }) 
+                }).then(r => r.json());
+                
                 if (res.success) {
                     const blob = new Blob([res.csv], { type: 'text/csv;charset=utf-8;' });
                     const link = document.createElement("a");
                     link.href = URL.createObjectURL(blob);
                     link.download = res.fileName;
                     link.click();
-                    Swal.close();
-                } else Swal.fire('提示', res.message, 'info');
-            } catch(e) { Swal.fire('錯誤', '下載失敗', 'error'); }
+                    if (!silentPassword) Swal.close();
+                    return true;
+                } else {
+                    Swal.fire('提示', res.message, 'error');
+                    return false;
+                }
+            } catch(e) { 
+                Swal.fire('錯誤', '下載失敗', 'error'); 
+                return false;
+            }
         }
 
+        // ★ 修改 2：統整清空與下載的密碼詢問，不再需要輸入兩次
         function clearDatabase() {
             Swal.fire({
                 title: '清空確認', 
@@ -369,35 +397,59 @@
                 cancelButtonText: '再想想',
                 confirmButtonColor: '#ef4444',
                 denyButtonColor: '#3b82f6',
-            }).then((result) => {
-                if (result.isDenied) { downloadCSV(); setTimeout(() => executeClear(), 2000); }
-                else if (result.isConfirmed) { executeClear(); }
+            }).then(async (result) => {
+                if (result.isConfirmed || result.isDenied) {
+                    const { value: pwd } = await Swal.fire({
+                        title: '權限驗證',
+                        input: 'password',
+                        inputLabel: '請輸入後台管理密碼以執行操作',
+                        inputPlaceholder: '輸入密碼...',
+                        showCancelButton: true,
+                        confirmButtonColor: '#ef4444',
+                        confirmButtonText: '確認',
+                        cancelButtonText: '取消'
+                    });
+                    
+                    if (!pwd) return;
+
+                    if (result.isDenied) { 
+                        // 先下載，成功後再清空
+                        const success = await downloadCSV(pwd); 
+                        if (success) {
+                            setTimeout(() => executeClear(pwd), 1500); 
+                        }
+                    } else if (result.isConfirmed) { 
+                        executeClear(pwd); 
+                    }
+                }
             });
         }
 
-        // ★ 已經改寫為透過 Swal.fire 驗證密碼的 executeClear
-        async function executeClear() {
-            // 跳出密碼驗證視窗
-            const { value: formPassword } = await Swal.fire({
-                title: '最後確認',
-                input: 'password',
-                inputLabel: '請輸入後台管理密碼以執行清空',
-                inputPlaceholder: '輸入密碼...',
-                showCancelButton: true,
-                confirmButtonColor: '#ef4444',
-                confirmButtonText: '確認清空',
-                cancelButtonText: '取消'
-            });
-
-            if (!formPassword) return; // 按下取消或未輸入則停止執行
-
-            Swal.fire({ title: '大掃除中...', didOpen: () => Swal.showLoading() });
+        // ★ 修改 3：支援從 clearDatabase 接收密碼，避免重複詢問
+        async function executeClear(silentPassword = null) {
+            let pwd = silentPassword;
+            if (!pwd) {
+                const { value: formPassword } = await Swal.fire({
+                    title: '最後確認',
+                    input: 'password',
+                    inputLabel: '請輸入後台管理密碼以執行清空',
+                    inputPlaceholder: '輸入密碼...',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ef4444',
+                    confirmButtonText: '確認清空',
+                    cancelButtonText: '取消'
+                });
+                if (!formPassword) return;
+                pwd = formPassword;
+            } else {
+                Swal.fire({ title: '大掃除中...', didOpen: () => Swal.showLoading() });
+            }
             
             fetch(API_URL, { 
                 method: "POST", 
                 body: JSON.stringify({ 
                     action: "clearData", 
-                    password: formPassword // 傳送剛剛輸入的密碼
+                    password: pwd 
                 }) 
             })
             .then(r => r.json()).then(d => {
@@ -405,7 +457,7 @@
                     Swal.fire({ title: '乾淨溜溜！✨', icon: 'success', confirmButtonColor: '#f43f5e' }); 
                     loadStats(); 
                 }
-                else Swal.fire('失敗', d.message, 'error'); // 密碼錯誤會顯示在這裡
+                else Swal.fire('失敗', d.message, 'error'); 
             });
         }
         
