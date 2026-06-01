@@ -44,15 +44,14 @@
                     <div class="bg-rose-100 p-3 rounded-2xl text-rose-500 text-2xl"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
                     <div>
                         <h1 class="text-2xl font-bold text-gray-800">土城廠活動表單設計</h1>
-                        <p class="text-sm text-gray-500">打造專屬UT土城的可愛報名頁</p>
+                        <p class="text-sm text-gray-500">打造專屬UT5的可愛報名頁</p>
                     </div>
                 </div>
                 
                 <div class="bg-rose-50/50 p-4 rounded-2xl border border-rose-100 mb-4">
                     <label class="block text-sm font-bold mb-2 text-rose-500 ml-1">活動大標題</label>
                     <input type="text" id="formTitle" value="活動報名" class="w-full px-4 py-3 rounded-xl border-2 border-rose-100 focus:border-rose-400 focus:ring-4 focus:ring-rose-100 outline-none transition bg-white text-lg font-bold text-gray-700 placeholder-rose-200">
-                    <input type="password" id="adminPwd" value="1234" class="hidden">
-                </div>
+                    </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100">
@@ -80,10 +79,10 @@
                 </div>
                 
                 <div class="flex gap-2">
-                            <button onclick="clearDatabase()" class="px-5 py-3 bg-red-50 text-red-500 border-2 border-transparent hover:border-red-200 rounded-2xl font-bold transition active:scale-95 flex items-center gap-2" title="清空資料">
-                                <i class="fa-solid fa-trash-can"></i>
-                                <span class="hidden sm:inline">清空歷史資料(新任務必點)</span>
-                            </button>
+                    <button onclick="clearDatabase()" class="px-5 py-3 bg-red-50 text-red-500 border-2 border-transparent hover:border-red-200 rounded-2xl font-bold transition active:scale-95 flex items-center gap-2" title="清空資料">
+                        <i class="fa-solid fa-trash-can"></i>
+                        <span class="hidden sm:inline">清空歷史資料(新任務必點)</span>
+                    </button>
                     <button onclick="saveConfig()" class="px-8 py-3 bg-gradient-to-r from-rose-400 to-pink-500 text-white rounded-2xl font-bold shadow-lg shadow-rose-200 hover:shadow-rose-300 hover:-translate-y-1 transition active:scale-95 flex items-center gap-2">
                         <i class="fa-solid fa-cloud-arrow-up"></i> 儲存發佈
                     </button>
@@ -121,7 +120,7 @@
 
     <script>
         // ▼▼▼ 請替換成你的 GAS 網址 ▼▼▼
-        const API_URL = "https://script.google.com/macros/s/AKfycbwLe8v81YiqAJCpjJI8hbVMRf7G5SLQ7hWYs0kwj0geVwPZhJRyKeDF40ralFgZTZhu/exec"; 
+        const API_URL = "https://script.google.com/macros/s/AKfycbwLe8v81YiqAJCpjJI8hbVMRf7G5SLQ7hWYs0kwj0geVwPZhJRyKeDF40ralFgZTZhu/exec";
         // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
         function generateUID() { return 'f_' + Math.random().toString(36).substr(2, 9); }
@@ -138,8 +137,6 @@
                 Swal.close();
                 if(res.success && res.config) {
                     document.getElementById('formTitle').value = res.config.title;
-                    
-                    // ★ 讀取時間設定
                     document.getElementById('startTime').value = res.config.startTime || "";
                     document.getElementById('endTime').value = res.config.endTime || "";
 
@@ -224,9 +221,8 @@
         }
         function addOption(btn) { btn.previousElementSibling.insertAdjacentHTML('beforeend', getOptionHtml()); }
 
-        function saveConfig() {
+        async function saveConfig() {
             const title = document.getElementById('formTitle').value;
-            // ★ 獲取時間設定
             const startTime = document.getElementById('startTime').value;
             const endTime = document.getElementById('endTime').value;
 
@@ -244,18 +240,30 @@
                 fields.push(fieldData);
             });
 
+            const { value: formPassword } = await Swal.fire({
+                title: '權限驗證',
+                input: 'password',
+                inputLabel: '請輸入後台管理密碼才能發佈',
+                inputPlaceholder: '輸入密碼...',
+                showCancelButton: true,
+                confirmButtonText: '確認發佈',
+                cancelButtonText: '取消',
+                confirmButtonColor: '#fb7185'
+            });
+
+            if (!formPassword) return;
+
             Swal.fire({ 
                 title: '儲存中...', 
                 html: '正在更新前台設定 📡', 
                 didOpen: () => Swal.showLoading() 
             });
             
-            // ★ 將時間設定一同發送
             fetch(API_URL, { 
                 method: "POST", 
                 body: JSON.stringify({ 
                     action: "saveConfig", 
-                    password: "1234", 
+                    password: formPassword, 
                     config: { title, startTime, endTime, fields } 
                 }) 
             })
@@ -328,25 +336,55 @@
             if (!hasLimitField) container.innerHTML = `<div class="text-center text-gray-400 text-sm py-8">此表單沒有設定限量選項<br>暫無名額統計 🍃</div>`;
         }
 
-        async function downloadCSV() {
+        // ★ 修改 1：下載 CSV 功能現在會透過 POST 傳遞密碼
+        async function downloadCSV(silentPassword = null) {
+            let pwd = silentPassword;
+            if (!pwd) {
+                const { value: formPassword } = await Swal.fire({
+                    title: '權限驗證',
+                    input: 'password',
+                    inputLabel: '請輸入後台管理密碼以下載報表',
+                    inputPlaceholder: '輸入密碼...',
+                    showCancelButton: true,
+                    confirmButtonText: '確認下載',
+                    cancelButtonText: '取消',
+                    confirmButtonColor: '#10b981'
+                });
+                if (!formPassword) return false;
+                pwd = formPassword;
+            }
+
             Swal.fire({ 
                 title: '打包中...', 
                 html: '正在為您製作 Excel 報表 🎁', 
                 didOpen: () => Swal.showLoading() 
             });
+            
             try {
-                const res = await fetch(API_URL + "?action=getCSV").then(r => r.json());
+                const res = await fetch(API_URL, { 
+                    method: "POST", 
+                    body: JSON.stringify({ action: "getCSV", password: pwd }) 
+                }).then(r => r.json());
+                
                 if (res.success) {
                     const blob = new Blob([res.csv], { type: 'text/csv;charset=utf-8;' });
                     const link = document.createElement("a");
                     link.href = URL.createObjectURL(blob);
                     link.download = res.fileName;
                     link.click();
-                    Swal.close();
-                } else Swal.fire('提示', res.message, 'info');
-            } catch(e) { Swal.fire('錯誤', '下載失敗', 'error'); }
+                    if (!silentPassword) Swal.close();
+                    return true;
+                } else {
+                    Swal.fire('提示', res.message, 'error');
+                    return false;
+                }
+            } catch(e) { 
+                Swal.fire('錯誤', '下載失敗', 'error'); 
+                return false;
+            }
         }
 
+        // ★ 修改 2：統整清空與下載的密碼詢問，不再需要輸入兩次
         function clearDatabase() {
             Swal.fire({
                 title: '清空確認', 
@@ -359,21 +397,67 @@
                 cancelButtonText: '再想想',
                 confirmButtonColor: '#ef4444',
                 denyButtonColor: '#3b82f6',
-            }).then((result) => {
-                if (result.isDenied) { downloadCSV(); setTimeout(() => executeClear(), 2000); }
-                else if (result.isConfirmed) { executeClear(); }
+            }).then(async (result) => {
+                if (result.isConfirmed || result.isDenied) {
+                    const { value: pwd } = await Swal.fire({
+                        title: '權限驗證',
+                        input: 'password',
+                        inputLabel: '請輸入後台管理密碼以執行操作',
+                        inputPlaceholder: '輸入密碼...',
+                        showCancelButton: true,
+                        confirmButtonColor: '#ef4444',
+                        confirmButtonText: '確認',
+                        cancelButtonText: '取消'
+                    });
+                    
+                    if (!pwd) return;
+
+                    if (result.isDenied) { 
+                        // 先下載，成功後再清空
+                        const success = await downloadCSV(pwd); 
+                        if (success) {
+                            setTimeout(() => executeClear(pwd), 1500); 
+                        }
+                    } else if (result.isConfirmed) { 
+                        executeClear(pwd); 
+                    }
+                }
             });
         }
 
-        function executeClear() {
-            Swal.fire({ title: '大掃除中...', didOpen: () => Swal.showLoading() });
-            fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "clearData", password: "1234" }) })
+        // ★ 修改 3：支援從 clearDatabase 接收密碼，避免重複詢問
+        async function executeClear(silentPassword = null) {
+            let pwd = silentPassword;
+            if (!pwd) {
+                const { value: formPassword } = await Swal.fire({
+                    title: '最後確認',
+                    input: 'password',
+                    inputLabel: '請輸入後台管理密碼以執行清空',
+                    inputPlaceholder: '輸入密碼...',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ef4444',
+                    confirmButtonText: '確認清空',
+                    cancelButtonText: '取消'
+                });
+                if (!formPassword) return;
+                pwd = formPassword;
+            } else {
+                Swal.fire({ title: '大掃除中...', didOpen: () => Swal.showLoading() });
+            }
+            
+            fetch(API_URL, { 
+                method: "POST", 
+                body: JSON.stringify({ 
+                    action: "clearData", 
+                    password: pwd 
+                }) 
+            })
             .then(r => r.json()).then(d => {
                 if(d.success) { 
                     Swal.fire({ title: '乾淨溜溜！✨', icon: 'success', confirmButtonColor: '#f43f5e' }); 
                     loadStats(); 
                 }
-                else Swal.fire('失敗', d.message, 'error');
+                else Swal.fire('失敗', d.message, 'error'); 
             });
         }
         
